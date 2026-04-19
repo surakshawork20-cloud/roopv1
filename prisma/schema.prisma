@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  password   String
+  name       String
+  phone      String?
+  role       String    @default("customer")
+  createdAt  DateTime  @default(now())
+  artist     Artist?
+  bookings   Booking[]
+  reviews    Review[]
+}
+
+model Artist {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName  String
+  tagline      String
+  bio          String
+  city         String
+  area         String
+  avatarUrl    String
+  coverUrl     String
+  specialties  String
+  yearsExp     Int       @default(0)
+  instagram    String?
+  featured     Boolean   @default(false)
+  verified     Boolean   @default(false)
+  portfolio    Portfolio[]
+  services     Service[]
+  bookings     Booking[]
+  reviews      Review[]
+  createdAt    DateTime  @default(now())
+}
+
+model Portfolio {
+  id        String  @id @default(cuid())
+  artistId  String
+  artist    Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  caption   String?
+  order     Int     @default(0)
+}
+
+model Service {
+  id          String    @id @default(cuid())
+  artistId    String
+  artist      Artist    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  duration    Int
+  price       Int
+  category    String
+  bookings    Booking[]
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artistId   String
+  artist     Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id])
+  date       DateTime
+  timeSlot   String
+  status     String   @default("confirmed")
+  totalPrice Int
+  notes      String?
+  address    String?
+  createdAt  DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artistId  String
+  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+}
