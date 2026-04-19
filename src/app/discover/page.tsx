@@ -8,15 +8,24 @@ export const metadata = {
   description: "Browse India's most talented makeup artists, hairstylists, and beauty professionals.",
 };
 
+async function getArtists() {
+  try {
+    return await db.artist.findMany({
+      include: {
+        portfolio: { take: 1, orderBy: { order: "asc" } },
+        reviews: true,
+        services: { orderBy: { price: "asc" } },
+      },
+      orderBy: [{ featured: "desc" }, { yearsExp: "desc" }],
+    });
+  } catch (err) {
+    console.error("DB unavailable on /discover:", err);
+    return [];
+  }
+}
+
 export default async function DiscoverPage() {
-  const artists = await db.artist.findMany({
-    include: {
-      portfolio: { take: 1, orderBy: { order: "asc" } },
-      reviews: true,
-      services: { orderBy: { price: "asc" } },
-    },
-    orderBy: [{ featured: "desc" }, { yearsExp: "desc" }],
-  });
+  const artists = await getArtists();
 
   const plain = artists.map((a) => ({
     id: a.id,

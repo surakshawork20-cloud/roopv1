@@ -11,8 +11,10 @@ export default async function ArtistPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [artist, user] = await Promise.all([
-    db.artist.findUnique({
+  const user = await getSessionUser();
+  let artist = null;
+  try {
+    artist = await db.artist.findUnique({
       where: { id },
       include: {
         portfolio: { orderBy: { order: "asc" } },
@@ -22,9 +24,10 @@ export default async function ArtistPage({
           orderBy: { createdAt: "desc" },
         },
       },
-    }),
-    getSessionUser(),
-  ]);
+    });
+  } catch (err) {
+    console.error("DB unavailable on artist profile:", err);
+  }
 
   if (!artist) notFound();
 
