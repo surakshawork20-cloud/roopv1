@@ -1,51 +1,59 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { ArtistDashboardClient } from "@/components/ArtistDashboardClient";
 
 export const dynamic = "force-dynamic";
+
+type BookingJoin = {
+  id: string; date: string; time_slot: string; status: string;
+  total_price: number; notes: string | null; address: string | null;
+  profiles: { name: string; email: string; phone: string | null } | null;
+  services: { name: string; category: string; duration: number } | null;
+};
 
 export default async function ArtistDashboard() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   if (user.role !== "artist" || !user.artistId) redirect("/dashboard");
 
-  const [artist, bookings, services, portfolio] = await Promise.all([
-    db.artist.findUnique({ where: { id: user.artistId } }),
-    db.booking.findMany({
-      where: { artistId: user.artistId },
-      include: { user: { select: { name: true, email: true, phone: true } }, service: true },
-      orderBy: { date: "desc" },
-    }),
-    db.service.findMany({ where: { artistId: user.artistId }, orderBy: { price: "asc" } }),
-    db.portfolio.findMany({ where: { artistId: user.artistId }, orderBy: { order: "asc" } }),
+  const supabase = await createClient();
+  const [artistRes, bookingsRes, servicesRes, portfolioRes, reviewsRes] = await Promise.all([
+    supabase.from("artists").select("*").eq("id", user.artistId).maybeSingle(),
+    supabase.from("bookings")
+      .select(`
+        id, date, time_slot, status, total_price, notes, address,
+        profiles ( name, email, phone ),
+        services ( name, category, duration )
+      `)
+      .eq("artist_id", user.artistId)
+      .order("date", { ascending: false }),
+    supabase.from("services").select("*").eq("artist_id", user.artistId).order("price", { ascending: true }),
+    supabase.from("portfolio_items").select("*").eq("artist_id", user.artistId).order("sort_order", { ascending: true }),
+    supabase.from("reviews").select("rating").eq("artist_id", user.artistId),
   ]);
 
-  if (!artist) redirect("/");
+  const artistRow = artistRes.data;
+  if (!artistRow) redirect("/");
 
-  const reviews = await db.review.findMany({ where: { artistId: user.artistId } });
-  const earnings = bookings
-    .filter((b) => b.status !== "cancelled")
-    .reduce((sum, b) => sum + b.totalPrice, 0);
-  const avgRating = reviews.length
-    ? reviews.reduce((a, b) => a + b.rating, 0) / reviews.length
-    : 0;
+  const bookings = (bookingsRes.data ?? []) as unknown as BookingJoin[];
+  const reviews = reviewsRes.data ?? [];
+  const earnings = bookings.filter((b) => b.status !== "cancelled").reduce((s, b) => s + b.total_price, 0);
+  const avgRating = reviews.length ? reviews.reduce((a, b) => a + b.rating, 0) / reviews.length : 0;
 
   const plainArtist = {
-    id: artist.id,
-    displayName: artist.displayName,
-    tagline: artist.tagline,
-    bio: artist.bio,
-    city: artist.city,
-    area: artist.area,
-    avatarUrl: artist.avatarUrl,
-    coverUrl: artist.coverUrl,
-    specialties: artist.specialties,
-    yearsExp: artist.yearsExp,
-    instagram: artist.instagram,
-    verified: artist.verified,
-    featured: artist.featured,
+    id: artistRow.id,
+    displayName: artistRow.display_name,
+    tagline: artistRow.tagline,
+    bio: artistRow.bio,
+    city: artistRow.city,
+    area: artistRow.area,
+    avatarUrl: artistRow.avatar_url,
+    coverUrl: artistRow.cover_url,
+    specialties: artistRow.specialties,
+    yearsExp: artistRow.years_exp,
+    instagram: artistRow.instagram,
+    verified: artistRow.verified,
+    featured: artistRow.featured,
   };
 
   return (
@@ -53,20 +61,32 @@ export default async function ArtistDashboard() {
       artist={plainArtist}
       bookings={bookings.map((b) => ({
         id: b.id,
-        date: b.date.toISOString(),
-        timeSlot: b.timeSlot,
+        date: b.date,
+        timeSlot: b.time_slot,
         status: b.status,
-        totalPrice: b.totalPrice,
+        totalPrice: b.total_price,
         notes: b.notes,
         address: b.address,
-        customerName: b.user.name,
-        customerPhone: b.user.phone,
-        serviceName: b.service.name,
-        serviceCategory: b.service.category,
-        serviceDuration: b.service.duration,
+        customerName: b.profiles?.name ?? "—",
+        customerPhone: b.profiles?.phone ?? null,
+        serviceName: b.services?.name ?? "—",
+        serviceCategory: b.services?.category ?? "",
+        serviceDuration: b.services?.duration ?? 0,
       }))}
-      services={services}
-      portfolio={portfolio.map(p => ({ id: p.id, imageUrl: p.imageUrl, caption: p.caption, order: p.order }))}
+      services={(servicesRes.data ?? []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        duration: s.duration,
+        price: s.price,
+        category: s.category,
+      }))}
+      portfolio={(portfolioRes.data ?? []).map((p) => ({
+        id: p.id,
+        imageUrl: p.image_url,
+        caption: p.caption,
+        order: p.sort_order,
+      }))}
       reviewCount={reviews.length}
       avgRating={avgRating}
       earnings={earnings}

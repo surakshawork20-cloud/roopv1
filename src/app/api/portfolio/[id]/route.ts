@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
   if (!user || user.role !== "artist") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const item = await db.portfolio.findUnique({ where: { id } });
-  if (!item || item.artistId !== user.artistId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  await db.portfolio.delete({ where: { id } });
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("portfolio_items").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ ok: true });
 }

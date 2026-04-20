@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -18,22 +17,31 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "Please log in to book." }, { status: 401 });
 
     const data = schema.parse(await req.json());
-    const service = await db.service.findUnique({ where: { id: data.serviceId } });
+    const supabase = await createClient();
+
+    const { data: service } = await supabase
+      .from("services")
+      .select("price")
+      .eq("id", data.serviceId)
+      .maybeSingle();
     if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
 
-    const booking = await db.booking.create({
-      data: {
-        userId: user.id,
-        artistId: data.artistId,
-        serviceId: data.serviceId,
-        date: new Date(data.date),
-        timeSlot: data.timeSlot,
-        totalPrice: service.price,
-        notes: data.notes,
-        address: data.address,
-      },
-    });
+    const { data: booking, error } = await supabase
+      .from("bookings")
+      .insert({
+        user_id: user.id,
+        artist_id: data.artistId,
+        service_id: data.serviceId,
+        date: data.date,
+        time_slot: data.timeSlot,
+        total_price: service.price,
+        notes: data.notes ?? null,
+        address: data.address ?? null,
+      })
+      .select("id")
+      .single();
 
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ ok: true, bookingId: booking.id });
   } catch (err) {
     if (err instanceof z.ZodError) {

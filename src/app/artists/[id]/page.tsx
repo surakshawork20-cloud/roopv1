@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { ArtistProfile } from "@/components/ArtistProfile";
-import { getSessionUser } from "@/lib/auth";
+import { toProfileArtist } from "@/lib/supabase/shape";
 
 export const dynamic = "force-dynamic";
 
@@ -12,55 +12,45 @@ export default async function ArtistPage({
 }) {
   const { id } = await params;
   const user = await getSessionUser();
-  let artist = null;
+
+  let rawArtist = null;
+  let rawReviews: Array<{
+    id: string; rating: number; comment: string; created_at: string;
+    profiles: { name: string } | null;
+  }> = [];
+
   try {
-    artist = await db.artist.findUnique({
-      where: { id },
-      include: {
-        portfolio: { orderBy: { order: "asc" } },
-        services: { orderBy: { price: "asc" } },
-        reviews: {
-          include: { user: { select: { name: true } } },
-          orderBy: { createdAt: "desc" },
-        },
-      },
-    });
+    const supabase = await createClient();
+    const [artistRes, reviewsRes] = await Promise.all([
+      supabase
+        .from("artists")
+        .select("*, portfolio_items(id, image_url, caption, sort_order), services(id, name, description, duration, price, category)")
+        .eq("id", id)
+        .maybeSingle(),
+      supabase
+        .from("reviews")
+        .select("id, rating, comment, created_at, profiles(name)")
+        .eq("artist_id", id)
+        .order("created_at", { ascending: false }),
+    ]);
+    rawArtist = artistRes.data;
+    rawReviews = (reviewsRes.data ?? []) as typeof rawReviews;
   } catch (err) {
     console.error("DB unavailable on artist profile:", err);
   }
 
-  if (!artist) notFound();
+  if (!rawArtist) notFound();
 
-  const plain = {
-    id: artist.id,
-    displayName: artist.displayName,
-    tagline: artist.tagline,
-    bio: artist.bio,
-    city: artist.city,
-    area: artist.area,
-    avatarUrl: artist.avatarUrl,
-    coverUrl: artist.coverUrl,
-    specialties: artist.specialties,
-    yearsExp: artist.yearsExp,
-    instagram: artist.instagram,
-    verified: artist.verified,
-    portfolio: artist.portfolio.map((p) => ({ id: p.id, imageUrl: p.imageUrl, caption: p.caption })),
-    services: artist.services.map((s) => ({
-      id: s.id,
-      name: s.name,
-      description: s.description,
-      duration: s.duration,
-      price: s.price,
-      category: s.category,
-    })),
-    reviews: artist.reviews.map((r) => ({
+  const artist = {
+    ...toProfileArtist(rawArtist),
+    reviews: rawReviews.map((r) => ({
       id: r.id,
       rating: r.rating,
       comment: r.comment,
-      userName: r.user.name,
-      createdAt: r.createdAt.toISOString(),
+      userName: r.profiles?.name ?? "Anonymous",
+      createdAt: r.created_at,
     })),
   };
 
-  return <ArtistProfile artist={plain} user={user} />;
+  return <ArtistProfile artist={artist} user={user} />;
 }

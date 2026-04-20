@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { createClient } from "@/lib/supabase/server";
 import { Hero } from "@/components/landing/Hero";
 import { Stats } from "@/components/landing/Stats";
 import { ServiceCategories } from "@/components/landing/ServiceCategories";
@@ -7,20 +7,20 @@ import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { ArtistCTA } from "@/components/landing/ArtistCTA";
 import { FinalCTA } from "@/components/landing/FinalCTA";
+import { toCardArtist } from "@/lib/supabase/shape";
 
 export const dynamic = "force-dynamic";
 
 async function getFeatured() {
   try {
-    return await db.artist.findMany({
-      where: { featured: true },
-      take: 6,
-      include: {
-        portfolio: { take: 1, orderBy: { order: "asc" } },
-        reviews: true,
-        services: { take: 1, orderBy: { price: "asc" } },
-      },
-    });
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("artists")
+      .select("*, portfolio_items(image_url, sort_order), reviews(rating), services(price)")
+      .eq("featured", true)
+      .order("years_exp", { ascending: false })
+      .limit(6);
+    return (data ?? []).map(toCardArtist);
   } catch (err) {
     console.error("DB unavailable, rendering with empty featured:", err);
     return [];
@@ -29,7 +29,6 @@ async function getFeatured() {
 
 export default async function Home() {
   const featured = await getFeatured();
-
   return (
     <>
       <Hero />

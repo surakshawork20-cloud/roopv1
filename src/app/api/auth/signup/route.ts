@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { hashPassword, createSession } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -13,48 +12,22 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const data = schema.parse(body);
+    const data = schema.parse(await req.json());
+    const supabase = await createClient();
 
-    const existing = await db.user.findUnique({ where: { email: data.email } });
-    if (existing) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 }
-      );
-    }
-
-    const user = await db.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        password: await hashPassword(data.password),
-        role: data.role,
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: { name: data.name, phone: data.phone, role: data.role },
       },
     });
 
-    if (data.role === "artist") {
-      await db.artist.create({
-        data: {
-          userId: user.id,
-          displayName: data.name,
-          tagline: "New artist on Roop",
-          bio: "Tell us about your style and experience.",
-          city: "Bengaluru",
-          area: "",
-          avatarUrl:
-            "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&q=80",
-          coverUrl:
-            "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&q=80",
-          specialties: "Bridal,Party,Editorial",
-          yearsExp: 0,
-        },
-      });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    await createSession(user.id);
-
+    // The handle_new_user trigger creates the profile (and artist row if applicable).
     return NextResponse.json({ ok: true, role: data.role });
   } catch (err) {
     if (err instanceof z.ZodError) {

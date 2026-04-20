@@ -1,5 +1,5 @@
 import { AuthForm } from "@/components/AuthForm";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export default async function SignupPage({

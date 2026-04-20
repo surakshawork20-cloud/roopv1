@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 
 export async function DELETE(
   _: NextRequest,
@@ -9,12 +8,15 @@ export async function DELETE(
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const booking = await db.booking.findUnique({ where: { id } });
-  if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (booking.userId !== user.id && booking.artistId !== user.artistId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  await db.booking.update({ where: { id }, data: { status: "cancelled" } });
+
+  const supabase = await createClient();
+  // RLS will enforce that only the customer or the owning artist can update.
+  const { error } = await supabase
+    .from("bookings")
+    .update({ status: "cancelled" })
+    .eq("id", id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ ok: true });
 }
 
@@ -23,17 +25,18 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user || user.role !== "artist") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   const body = await req.json();
-  const booking = await db.booking.findUnique({ where: { id } });
-  if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (booking.artistId !== user.artistId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const updated = await db.booking.update({
-    where: { id },
-    data: { status: body.status },
-  });
-  return NextResponse.json({ ok: true, booking: updated });
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .update({ status: body.status })
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json({ ok: true, booking: data });
 }

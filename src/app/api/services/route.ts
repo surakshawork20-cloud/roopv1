@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -15,10 +14,26 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user || user.role !== "artist") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const data = schema.parse(await req.json());
     if (data.artistId !== user.artistId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    const service = await db.service.create({ data });
+
+    const supabase = await createClient();
+    const { data: service, error } = await supabase
+      .from("services")
+      .insert({
+        artist_id: data.artistId,
+        name: data.name,
+        description: data.description,
+        duration: data.duration,
+        price: data.price,
+        category: data.category,
+      })
+      .select()
+      .single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ ok: true, service });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: "Invalid input" }, { status: 400 });

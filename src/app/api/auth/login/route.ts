@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { verifyPassword, createSession } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -11,15 +10,20 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = schema.parse(await req.json());
-    const user = await db.user.findUnique({ where: { email } });
-    if (!user || !(await verifyPassword(password, user.password))) {
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
-    await createSession(user.id);
-    return NextResponse.json({ ok: true, role: user.role });
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    return NextResponse.json({ ok: true, role: profile?.role ?? "customer" });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });

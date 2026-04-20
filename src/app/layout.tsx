@@ -3,7 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/supabase/server";
 
 const inter = Inter({
   variable: "--font-inter",

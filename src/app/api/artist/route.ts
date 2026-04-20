@@ -1,26 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 
 export async function PATCH(req: NextRequest) {
   const user = await getSessionUser();
-  if (!user || user.role !== "artist" || !user.artistId)
+  if (!user || user.role !== "artist" || !user.artistId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const body = await req.json();
-  const artist = await db.artist.update({
-    where: { id: user.artistId },
-    data: {
-      displayName: body.displayName,
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("artists")
+    .update({
+      display_name: body.displayName,
       tagline: body.tagline,
       bio: body.bio,
       city: body.city,
       area: body.area,
-      avatarUrl: body.avatarUrl,
-      coverUrl: body.coverUrl,
+      avatar_url: body.avatarUrl,
+      cover_url: body.coverUrl,
       specialties: body.specialties,
-      yearsExp: body.yearsExp,
+      years_exp: body.yearsExp,
       instagram: body.instagram || null,
-    },
-  });
-  return NextResponse.json({ ok: true, artist });
+    })
+    .eq("id", user.artistId)
+    .select()
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json({ ok: true, artist: data });
 }

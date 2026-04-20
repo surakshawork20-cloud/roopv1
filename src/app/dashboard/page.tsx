@@ -1,27 +1,46 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { formatPrice, formatDateLong } from "@/lib/utils";
+import { Sparkles, Calendar, Clock, MapPin, CheckCircle, XCircle } from "lucide-react";
+import { CancelBookingButton } from "@/components/CancelBookingButton";
 
 export const dynamic = "force-dynamic";
-import { formatPrice, formatDateLong } from "@/lib/utils";
-import { Sparkles, Calendar, Clock, MapPin, CheckCircle, XCircle, ArrowUpRight } from "lucide-react";
-import { CancelBookingButton } from "@/components/CancelBookingButton";
+
+type BookingRow = {
+  id: string;
+  date: string;
+  time_slot: string;
+  status: string;
+  total_price: number;
+  address: string | null;
+  notes: string | null;
+  artists: {
+    id: string; display_name: string; avatar_url: string; city: string; area: string;
+  } | null;
+  services: { name: string; category: string; duration: number } | null;
+};
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   if (user.role === "artist") redirect("/artist/dashboard");
 
-  const bookings = await db.booking.findMany({
-    where: { userId: user.id },
-    include: { artist: true, service: true },
-    orderBy: { date: "desc" },
-  });
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("bookings")
+    .select(`
+      id, date, time_slot, status, total_price, address, notes,
+      artists ( id, display_name, avatar_url, city, area ),
+      services ( name, category, duration )
+    `)
+    .eq("user_id", user.id)
+    .order("date", { ascending: false });
 
+  const bookings = (data ?? []) as unknown as BookingRow[];
   const now = new Date();
-  const upcoming = bookings.filter((b) => b.date >= now && b.status !== "cancelled");
-  const past = bookings.filter((b) => b.date < now || b.status === "cancelled");
+  const upcoming = bookings.filter((b) => new Date(b.date) >= now && b.status !== "cancelled");
+  const past = bookings.filter((b) => new Date(b.date) < now || b.status === "cancelled");
 
   return (
     <section className="py-12 lg:py-20">
@@ -55,9 +74,7 @@ export default async function DashboardPage() {
           />
         ) : (
           <div className="grid gap-4 mb-14">
-            {upcoming.map((b) => (
-              <BookingCard key={b.id} booking={b} canCancel />
-            ))}
+            {upcoming.map((b) => <BookingCard key={b.id} booking={b} canCancel />)}
           </div>
         )}
 
@@ -66,9 +83,7 @@ export default async function DashboardPage() {
           <p className="text-ink-dim text-sm">You haven&apos;t had any past bookings yet.</p>
         ) : (
           <div className="grid gap-4">
-            {past.map((b) => (
-              <BookingCard key={b.id} booking={b} past />
-            ))}
+            {past.map((b) => <BookingCard key={b.id} booking={b} past />)}
           </div>
         )}
       </div>
@@ -97,39 +112,31 @@ function EmptyState({ title, body, cta, href }: { title: string; body: string; c
 }
 
 function BookingCard({ booking, canCancel, past }: {
-  booking: {
-    id: string;
-    date: Date;
-    timeSlot: string;
-    status: string;
-    totalPrice: number;
-    address: string | null;
-    notes: string | null;
-    artist: { id: string; displayName: string; avatarUrl: string; city: string; area: string };
-    service: { name: string; category: string; duration: number };
-  };
+  booking: BookingRow;
   canCancel?: boolean;
   past?: boolean;
 }) {
   const cancelled = booking.status === "cancelled";
+  const artist = booking.artists;
+  const service = booking.services;
+  if (!artist || !service) return null;
   return (
     <div className={`glass rounded-3xl p-5 lg:p-7 ${cancelled ? "opacity-50" : ""}`}>
       <div className="grid lg:grid-cols-[auto_1fr_auto] gap-5 items-center">
-        <Link href={`/artists/${booking.artist.id}`} className="flex items-center gap-4">
-          <img src={booking.artist.avatarUrl} alt="" className="w-16 h-16 rounded-2xl object-cover" />
+        <Link href={`/artists/${artist.id}`} className="flex items-center gap-4">
+          <img src={artist.avatar_url} alt="" className="w-16 h-16 rounded-2xl object-cover" />
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-widest text-gold mb-1">{booking.service.category}</div>
-            <div className="font-semibold text-lg truncate">{booking.service.name}</div>
-            <div className="text-sm text-ink-dim">with {booking.artist.displayName}</div>
+            <div className="text-[10px] uppercase tracking-widest text-gold mb-1">{service.category}</div>
+            <div className="font-semibold text-lg truncate">{service.name}</div>
+            <div className="text-sm text-ink-dim">with {artist.display_name}</div>
           </div>
         </Link>
-
         <div className="flex flex-wrap gap-4 text-sm">
           <span className="flex items-center gap-1.5 text-ink-dim">
-            <Calendar size={12} className="text-gold" /> {formatDateLong(booking.date)}
+            <Calendar size={12} className="text-gold" /> {formatDateLong(new Date(booking.date))}
           </span>
           <span className="flex items-center gap-1.5 text-ink-dim">
-            <Clock size={12} className="text-gold" /> {booking.timeSlot} · {booking.service.duration} min
+            <Clock size={12} className="text-gold" /> {booking.time_slot} · {service.duration} min
           </span>
           {booking.address && (
             <span className="flex items-center gap-1.5 text-ink-dim">
@@ -137,9 +144,8 @@ function BookingCard({ booking, canCancel, past }: {
             </span>
           )}
         </div>
-
         <div className="flex flex-col items-end gap-2">
-          <div className="font-display text-2xl text-gradient-rose">{formatPrice(booking.totalPrice)}</div>
+          <div className="font-display text-2xl text-gradient-rose">{formatPrice(booking.total_price)}</div>
           {cancelled ? (
             <span className="chip text-rose border-rose/30"><XCircle size={10} /> Cancelled</span>
           ) : past ? (
