@@ -34,7 +34,7 @@ export default async function ArtistPage({
         .order("created_at", { ascending: false }),
     ]);
     rawArtist = artistRes.data;
-    rawReviews = (reviewsRes.data ?? []) as typeof rawReviews;
+    rawReviews = (reviewsRes.data ?? []) as unknown as typeof rawReviews;
   } catch (err) {
     console.error("DB unavailable on artist profile:", err);
   }
