@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { z } from "zod";
+import { notifyBookingRequested } from "@/lib/notify";
 
 const schema = z.object({
   artistId: z.string(),
   serviceId: z.string(),
   date: z.string(),
   timeSlot: z.string(),
+  eventName: z.string().min(1, "Event name is required"),
+  budget: z.number().int().nonnegative().optional(),
   notes: z.string().optional(),
-  address: z.string().optional(),
+  address: z.string().min(1, "Address is required"),
 });
 
 export async function POST(req: NextRequest) {
@@ -21,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     const { data: service } = await supabase
       .from("services")
-      .select("price")
+      .select("price, name")
       .eq("id", data.serviceId)
       .maybeSingle();
     if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
@@ -35,17 +38,24 @@ export async function POST(req: NextRequest) {
         date: data.date,
         time_slot: data.timeSlot,
         total_price: service.price,
+        event_name: data.eventName,
+        budget: data.budget ?? null,
         notes: data.notes ?? null,
-        address: data.address ?? null,
+        address: data.address,
+        status: "pending",
       })
       .select("id")
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+    // Fire-and-forget email (never blocks the response).
+    notifyBookingRequested(booking.id).catch((e) => console.error("notify failed:", e));
+
     return NextResponse.json({ ok: true, bookingId: booking.id });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid booking details" }, { status: 400 });
+      return NextResponse.json({ error: err.issues[0]?.message ?? "Invalid booking details" }, { status: 400 });
     }
     console.error(err);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });

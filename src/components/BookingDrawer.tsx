@@ -5,41 +5,31 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ChevronLeft, ChevronRight, Check, Clock, Calendar,
-  Sparkles, Loader2, MapPin, LogIn,
+  Sparkles, Loader2, MapPin, LogIn, IndianRupee, PartyPopper,
 } from "lucide-react";
 import { formatPrice, formatDateLong } from "@/lib/utils";
-import { addDays, format, isSameDay, startOfDay } from "date-fns";
+import { format } from "date-fns";
+import { AvailabilityCalendar } from "./AvailabilityCalendar";
+import type { AvailabilityInput } from "@/lib/availability";
 
 type Service = {
-  id: string;
-  name: string;
-  description: string;
-  duration: number;
-  price: number;
-  category: string;
+  id: string; name: string; description: string;
+  duration: number; price: number; category: string;
 };
-
 type Artist = {
-  id: string;
-  displayName: string;
-  avatarUrl: string;
-  city: string;
-  area: string;
-  services: Service[];
+  id: string; displayName: string; avatarUrl: string;
+  city: string; area: string; services: Service[];
 };
 
 const slots = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
 
 export function BookingDrawer({
-  artist,
-  user,
-  service,
-  onClose,
-  onChangeService,
+  artist, user, service, availability, onClose, onChangeService,
 }: {
   artist: Artist;
   user: { id: string; name: string; role: string } | null;
   service: Service | null;
+  availability: AvailabilityInput;
   onClose: () => void;
   onChangeService: (s: Service) => void;
 }) {
@@ -47,18 +37,19 @@ export function BookingDrawer({
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [date, setDate] = useState<Date | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
+  const [eventName, setEventName] = useState("");
+  const [budget, setBudget] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const today = startOfDay(new Date());
-  const days = Array.from({ length: 14 }, (_, i) => addDays(today, i));
-
   function reset() {
     setStep(1);
     setDate(null);
     setSlot(null);
+    setEventName("");
+    setBudget("");
     setAddress("");
     setNotes("");
     setError(null);
@@ -66,7 +57,7 @@ export function BookingDrawer({
   }
 
   async function confirm() {
-    if (!service || !date || !slot) return;
+    if (!service || !date || !slot || !eventName || !address) return;
     setLoading(true);
     setError(null);
     try {
@@ -78,6 +69,8 @@ export function BookingDrawer({
           serviceId: service.id,
           date: date.toISOString(),
           timeSlot: slot,
+          eventName,
+          budget: budget ? Number(budget) : undefined,
           address,
           notes,
         }),
@@ -94,31 +87,29 @@ export function BookingDrawer({
   }
 
   const open = service !== null;
+  const canContinueStep2 = date && slot;
+  const canSubmit = !!(address && eventName);
 
   return (
     <AnimatePresence>
       {open && (
         <>
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={reset}
             className="fixed inset-0 bg-bg/70 backdrop-blur-md z-[99]"
           />
           <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
+            initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            className="fixed right-0 top-0 bottom-0 w-full sm:w-[480px] bg-bg-soft border-l border-border-strong z-[100] flex flex-col"
+            className="fixed right-0 top-0 bottom-0 w-full sm:w-[520px] bg-bg-soft border-l border-border-strong z-[100] flex flex-col"
           >
             <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
               <div className="flex items-center gap-3">
                 <img src={artist.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
                 <div>
                   <div className="font-semibold">{artist.displayName}</div>
-                  <div className="text-xs text-ink-dim">Step {step} of 3</div>
+                  <div className="text-xs text-ink-dim">Step {Math.min(step, 3)} of 3 · Request a booking</div>
                 </div>
               </div>
               <button onClick={reset} className="w-9 h-9 rounded-full bg-surface border border-border flex items-center justify-center">
@@ -129,12 +120,9 @@ export function BookingDrawer({
             <div className="px-5 py-2 border-b border-border shrink-0">
               <div className="flex gap-1.5">
                 {[1, 2, 3].map((n) => (
-                  <div
-                    key={n}
-                    className={`flex-1 h-1 rounded-full transition-colors ${
-                      step >= n ? "bg-gradient-to-r from-rose to-violet" : "bg-surface-2"
-                    }`}
-                  />
+                  <div key={n} className={`flex-1 h-1 rounded-full transition-colors ${
+                    step >= n ? "bg-gradient-to-r from-gold-bright to-gold-deep" : "bg-surface-2"
+                  }`} />
                 ))}
               </div>
             </div>
@@ -145,9 +133,9 @@ export function BookingDrawer({
                   <div className="flex gap-3 items-start">
                     <LogIn size={20} className="text-gold mt-0.5" />
                     <div>
-                      <div className="font-semibold mb-1">Almost there — sign in to book</div>
+                      <div className="font-semibold mb-1">Sign in to send this request</div>
                       <div className="text-sm text-ink-dim mb-3">
-                        You&apos;ll need an account to confirm a booking.
+                        The artist needs your verified contact details.
                       </div>
                       <div className="flex gap-2">
                         <Link href="/login" className="btn-ghost text-xs py-2 px-3">Log in</Link>
@@ -185,7 +173,7 @@ export function BookingDrawer({
                           <div className="text-right shrink-0">
                             <div className="font-display text-xl text-gradient-rose">{formatPrice(s.price)}</div>
                             {service.id === s.id && (
-                              <div className="mt-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold text-bg">
+                              <div className="mt-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold text-wine-deep">
                                 <Check size={14} />
                               </div>
                             )}
@@ -200,38 +188,23 @@ export function BookingDrawer({
               {step === 2 && service && (
                 <div>
                   <h3 className="font-display text-2xl mb-1">Pick date & time</h3>
-                  <p className="text-sm text-ink-dim mb-5">Select when the artist will come to you.</p>
+                  <p className="text-sm text-ink-dim mb-5">
+                    Unavailable dates are shown in red. Pick a free or partially-booked day.
+                  </p>
 
-                  <div className="mb-5">
-                    <div className="text-xs uppercase tracking-widest text-ink-dim mb-3 flex items-center gap-1.5">
-                      <Calendar size={12} className="text-gold" /> Date
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {days.slice(0, 12).map((d) => {
-                        const selected = date && isSameDay(d, date);
-                        return (
-                          <button
-                            key={d.toISOString()}
-                            onClick={() => setDate(d)}
-                            className={`p-3 rounded-xl text-center border transition-all ${
-                              selected
-                                ? "border-gold bg-gradient-to-br from-gold/20 to-transparent"
-                                : "border-border bg-surface/50 hover:border-gold/40"
-                            }`}
-                          >
-                            <div className="text-[10px] uppercase tracking-wider text-ink-dim">{format(d, "EEE")}</div>
-                            <div className="font-display text-xl mt-0.5">{format(d, "d")}</div>
-                            <div className="text-[10px] text-ink-dim">{format(d, "MMM")}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  <div className="mb-6 p-4 rounded-2xl bg-surface/50 border border-border">
+                    <AvailabilityCalendar
+                      availability={availability}
+                      value={date}
+                      onPick={(d) => { setDate(d); setSlot(null); }}
+                      compact
+                    />
                   </div>
 
                   {date && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                       <div className="text-xs uppercase tracking-widest text-ink-dim mb-3 flex items-center gap-1.5">
-                        <Clock size={12} className="text-gold" /> Time slot
+                        <Clock size={12} className="text-gold" /> Time slot · {format(date, "EEE, d MMM")}
                       </div>
                       <div className="grid grid-cols-4 gap-2">
                         {slots.map((s) => (
@@ -255,17 +228,42 @@ export function BookingDrawer({
 
               {step === 3 && service && (
                 <div>
-                  <h3 className="font-display text-2xl mb-1">Almost done</h3>
-                  <p className="text-sm text-ink-dim mb-5">Where should the artist arrive?</p>
+                  <h3 className="font-display text-2xl mb-1">Event details</h3>
+                  <p className="text-sm text-ink-dim mb-5">Help the artist prep for your day.</p>
 
                   <label className="block mb-4">
                     <span className="text-xs uppercase tracking-widest text-ink-dim mb-2 block flex items-center gap-1.5">
-                      <MapPin size={12} className="text-gold" /> Address
+                      <PartyPopper size={12} className="text-gold" /> Event name
+                    </span>
+                    <input
+                      value={eventName}
+                      onChange={(e) => setEventName(e.target.value)}
+                      placeholder="Wedding · Reception · Birthday · Haldi…"
+                      className="w-full px-4 py-3 rounded-xl bg-surface border border-border focus:border-gold/50 outline-none"
+                    />
+                  </label>
+
+                  <label className="block mb-4">
+                    <span className="text-xs uppercase tracking-widest text-ink-dim mb-2 block flex items-center gap-1.5">
+                      <MapPin size={12} className="text-gold" /> Location where artist should arrive
                     </span>
                     <input
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Your home, venue, or studio address"
+                      className="w-full px-4 py-3 rounded-xl bg-surface border border-border focus:border-gold/50 outline-none"
+                    />
+                  </label>
+
+                  <label className="block mb-4">
+                    <span className="text-xs uppercase tracking-widest text-ink-dim mb-2 block flex items-center gap-1.5">
+                      <IndianRupee size={12} className="text-gold" /> Budget (optional)
+                    </span>
+                    <input
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="e.g. 15000"
+                      inputMode="numeric"
                       className="w-full px-4 py-3 rounded-xl bg-surface border border-border focus:border-gold/50 outline-none"
                     />
                   </label>
@@ -276,20 +274,19 @@ export function BookingDrawer({
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Any allergies, preferences, or look references to share?"
-                      rows={4}
+                      rows={3}
                       className="w-full px-4 py-3 rounded-xl bg-surface border border-border focus:border-gold/50 outline-none resize-none"
                     />
                   </label>
 
                   <div className="glass rounded-2xl p-5">
-                    <div className="text-xs uppercase tracking-widest text-gold mb-3">Booking summary</div>
+                    <div className="text-xs uppercase tracking-widest text-gold mb-3">Request summary</div>
                     <div className="space-y-2 text-sm">
                       <Row label="Service" value={service.name} />
                       <Row label="Date" value={date ? formatDateLong(date) : "—"} />
                       <Row label="Time" value={slot || "—"} />
-                      <Row label="Duration" value={`${service.duration} min`} />
                       <div className="h-px bg-border my-2" />
-                      <Row label="Total" value={formatPrice(service.price)} big />
+                      <Row label="Quoted price" value={formatPrice(service.price)} big />
                     </div>
                   </div>
 
@@ -302,31 +299,27 @@ export function BookingDrawer({
               )}
 
               {step === 4 && service && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="py-8 text-center"
-                >
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="py-8 text-center">
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                    initial={{ scale: 0 }} animate={{ scale: 1 }}
                     transition={{ type: "spring", delay: 0.1 }}
-                    className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-gold to-rose flex items-center justify-center mb-6"
+                    className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-gold-bright to-gold-deep flex items-center justify-center mb-6"
                   >
-                    <Check size={40} className="text-bg" strokeWidth={3} />
+                    <Check size={40} className="text-wine-deep" strokeWidth={3} />
                   </motion.div>
-                  <h3 className="font-display text-4xl mb-3">You&apos;re booked!</h3>
+                  <h3 className="font-display text-4xl mb-3">Request sent!</h3>
                   <p className="text-ink-dim mb-8">
-                    {artist.displayName} will confirm shortly. You&apos;ll find this booking in your dashboard.
+                    {artist.displayName} will review your request and get back with an accept or reject.
+                    You&apos;ll be notified by email the moment they respond.
                   </p>
                   <div className="glass rounded-2xl p-5 mb-6 text-left">
-                    <Row label="Service" value={service.name} />
-                    <Row label="With" value={artist.displayName} />
+                    <Row label="Event" value={eventName} />
+                    <Row label="Artist" value={artist.displayName} />
                     <Row label="When" value={`${date ? formatDateLong(date) : ""} at ${slot}`} />
-                    <Row label="Total" value={formatPrice(service.price)} big />
+                    <Row label="Status" value="Pending" big />
                   </div>
                   <Link href="/dashboard" onClick={reset} className="btn-primary w-full">
-                    View my bookings
+                    Track my requests
                   </Link>
                 </motion.div>
               )}
@@ -343,9 +336,9 @@ export function BookingDrawer({
                   <button
                     onClick={() => {
                       if (step === 1 && service) setStep(2);
-                      else if (step === 2 && date && slot) setStep(3);
+                      else if (step === 2 && canContinueStep2) setStep(3);
                     }}
-                    disabled={step === 2 && (!date || !slot)}
+                    disabled={step === 2 && !canContinueStep2}
                     className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Continue <ChevronRight size={16} />
@@ -353,10 +346,10 @@ export function BookingDrawer({
                 ) : (
                   <button
                     onClick={confirm}
-                    disabled={loading || !user || !address}
+                    disabled={loading || !user || !canSubmit}
                     className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? <Loader2 className="animate-spin" size={16} /> : <><Sparkles size={14} /> Confirm booking</>}
+                    {loading ? <Loader2 className="animate-spin" size={16} /> : <><Sparkles size={14} /> Send request</>}
                   </button>
                 )}
               </div>

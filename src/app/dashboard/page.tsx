@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { formatPrice, formatDateLong } from "@/lib/utils";
-import { Sparkles, Calendar, Clock, MapPin, CheckCircle, XCircle } from "lucide-react";
+import { Sparkles, Calendar, Clock, MapPin, CheckCircle, XCircle, Clock3 } from "lucide-react";
 import { CancelBookingButton } from "@/components/CancelBookingButton";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +15,9 @@ type BookingRow = {
   total_price: number;
   address: string | null;
   notes: string | null;
+  event_name: string | null;
+  budget: number | null;
+  rejection_reason: string | null;
   artists: {
     id: string; display_name: string; avatar_url: string; city: string; area: string;
   } | null;
@@ -31,6 +34,7 @@ export default async function DashboardPage() {
     .from("bookings")
     .select(`
       id, date, time_slot, status, total_price, address, notes,
+      event_name, budget, rejection_reason,
       artists ( id, display_name, avatar_url, city, area ),
       services ( name, category, duration )
     `)
@@ -38,9 +42,12 @@ export default async function DashboardPage() {
     .order("date", { ascending: false });
 
   const bookings = (data ?? []) as unknown as BookingRow[];
-  const now = new Date();
-  const upcoming = bookings.filter((b) => new Date(b.date) >= now && b.status !== "cancelled");
-  const past = bookings.filter((b) => new Date(b.date) < now || b.status === "cancelled");
+  const pending = bookings.filter((b) => b.status === "pending");
+  const active = bookings.filter((b) => b.status === "accepted" && new Date(b.date) >= new Date());
+  const past = bookings.filter((b) =>
+    b.status === "rejected" || b.status === "cancelled" || b.status === "completed" ||
+    (b.status === "accepted" && new Date(b.date) < new Date())
+  );
 
   return (
     <section className="py-12 lg:py-20">
@@ -50,7 +57,7 @@ export default async function DashboardPage() {
             <div className="chip mb-4"><Sparkles size={12} className="text-gold" />Your space</div>
             <h1 className="font-display text-5xl lg:text-6xl">Hi, {user.name.split(" ")[0]}.</h1>
             <p className="mt-3 text-ink-dim max-w-xl">
-              Track upcoming appointments, relive past glow-ups, and plan your next look.
+              Track your booking requests, upcoming sessions, and past appointments.
             </p>
           </div>
           <Link href="/discover" className="btn-primary shine self-start">
@@ -59,13 +66,22 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid sm:grid-cols-3 gap-4 mb-12">
-          <StatCard label="Total bookings" value={bookings.length.toString()} />
-          <StatCard label="Upcoming" value={upcoming.length.toString()} highlight />
-          <StatCard label="Completed" value={past.filter((b) => b.status !== "cancelled").length.toString()} />
+          <StatCard label="Pending" value={pending.length.toString()} highlight={pending.length > 0} />
+          <StatCard label="Upcoming" value={active.length.toString()} />
+          <StatCard label="Completed" value={past.filter((b) => b.status === "accepted" || b.status === "completed").length.toString()} />
         </div>
 
+        {pending.length > 0 && (
+          <>
+            <h2 className="font-display text-3xl mb-5">Waiting on artist</h2>
+            <div className="grid gap-4 mb-14">
+              {pending.map((b) => <BookingCard key={b.id} booking={b} canCancel />)}
+            </div>
+          </>
+        )}
+
         <h2 className="font-display text-3xl mb-5">Upcoming</h2>
-        {upcoming.length === 0 ? (
+        {active.length === 0 ? (
           <EmptyState
             title="No upcoming bookings"
             body="Ready for your next glow-up? Discover artists and book your moment."
@@ -74,13 +90,13 @@ export default async function DashboardPage() {
           />
         ) : (
           <div className="grid gap-4 mb-14">
-            {upcoming.map((b) => <BookingCard key={b.id} booking={b} canCancel />)}
+            {active.map((b) => <BookingCard key={b.id} booking={b} canCancel />)}
           </div>
         )}
 
-        <h2 className="font-display text-3xl mb-5">Past bookings</h2>
+        <h2 className="font-display text-3xl mb-5">Past</h2>
         {past.length === 0 ? (
-          <p className="text-ink-dim text-sm">You haven&apos;t had any past bookings yet.</p>
+          <p className="text-ink-dim text-sm">Nothing in your history yet.</p>
         ) : (
           <div className="grid gap-4">
             {past.map((b) => <BookingCard key={b.id} booking={b} past />)}
@@ -111,24 +127,31 @@ function EmptyState({ title, body, cta, href }: { title: string; body: string; c
   );
 }
 
+function StatusPill({ status }: { status: string }) {
+  if (status === "pending") return <span className="chip text-gold border-gold/30"><Clock3 size={10} /> Pending</span>;
+  if (status === "accepted") return <span className="chip text-emerald border-emerald/30"><CheckCircle size={10} /> Accepted</span>;
+  if (status === "completed") return <span className="chip text-emerald border-emerald/30"><CheckCircle size={10} /> Completed</span>;
+  if (status === "rejected") return <span className="chip text-rose border-rose/30"><XCircle size={10} /> Rejected</span>;
+  if (status === "cancelled") return <span className="chip text-rose border-rose/30"><XCircle size={10} /> Cancelled</span>;
+  return <span className="chip">{status}</span>;
+}
+
 function BookingCard({ booking, canCancel, past }: {
-  booking: BookingRow;
-  canCancel?: boolean;
-  past?: boolean;
+  booking: BookingRow; canCancel?: boolean; past?: boolean;
 }) {
-  const cancelled = booking.status === "cancelled";
   const artist = booking.artists;
   const service = booking.services;
   if (!artist || !service) return null;
+  const dimmed = booking.status === "cancelled" || booking.status === "rejected";
   return (
-    <div className={`glass rounded-3xl p-5 lg:p-7 ${cancelled ? "opacity-50" : ""}`}>
+    <div className={`glass rounded-3xl p-5 lg:p-7 ${dimmed ? "opacity-70" : ""}`}>
       <div className="grid lg:grid-cols-[auto_1fr_auto] gap-5 items-center">
         <Link href={`/artists/${artist.id}`} className="flex items-center gap-4">
           <img src={artist.avatar_url} alt="" className="w-16 h-16 rounded-2xl object-cover" />
           <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-widest text-gold mb-1">{service.category}</div>
-            <div className="font-semibold text-lg truncate">{service.name}</div>
-            <div className="text-sm text-ink-dim">with {artist.display_name}</div>
+            <div className="font-semibold text-lg truncate">{booking.event_name ?? service.name}</div>
+            <div className="text-sm text-ink-dim">with {artist.display_name}{past ? "" : ""}</div>
           </div>
         </Link>
         <div className="flex flex-wrap gap-4 text-sm">
@@ -146,17 +169,17 @@ function BookingCard({ booking, canCancel, past }: {
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="font-display text-2xl text-gradient-rose">{formatPrice(booking.total_price)}</div>
-          {cancelled ? (
-            <span className="chip text-rose border-rose/30"><XCircle size={10} /> Cancelled</span>
-          ) : past ? (
-            <span className="chip text-emerald border-emerald/30"><CheckCircle size={10} /> Completed</span>
-          ) : (
-            <span className="chip text-gold border-gold/30"><CheckCircle size={10} /> Confirmed</span>
-          )}
-          {canCancel && !cancelled && <CancelBookingButton id={booking.id} />}
+          <StatusPill status={booking.status} />
+          {canCancel && (booking.status === "pending" || booking.status === "accepted") && <CancelBookingButton id={booking.id} />}
         </div>
       </div>
-      {booking.notes && (
+      {booking.rejection_reason && (
+        <div className="mt-4 pt-4 border-t border-border text-sm">
+          <span className="text-rose font-medium">Artist&apos;s reason:</span>{" "}
+          <span className="text-ink-dim italic">&ldquo;{booking.rejection_reason}&rdquo;</span>
+        </div>
+      )}
+      {booking.notes && !booking.rejection_reason && (
         <div className="mt-4 pt-4 border-t border-border text-sm text-ink-dim">
           <span className="text-gold">Notes:</span> {booking.notes}
         </div>

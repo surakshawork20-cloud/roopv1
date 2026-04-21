@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { ArtistProfile } from "@/components/ArtistProfile";
 import { toProfileArtist } from "@/lib/supabase/shape";
+import { buildAvailability } from "@/lib/availability";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +15,18 @@ export default async function ArtistPage({
   const { id } = await params;
   const user = await getSessionUser();
 
-  let rawArtist = null;
+  let rawArtist: unknown = null;
   let rawReviews: Array<{
     id: string; rating: number; comment: string; created_at: string;
     profiles: { name: string } | null;
   }> = [];
+  let bookings: { date: string; status: string }[] = [];
+  let events: { event_date: string }[] = [];
+  let blocks: { blocked_date: string }[] = [];
 
   try {
     const supabase = await createClient();
-    const [artistRes, reviewsRes] = await Promise.all([
+    const [artistRes, reviewsRes, bookingsRes, eventsRes, blocksRes] = await Promise.all([
       supabase
         .from("artists")
         .select("*, portfolio_items(id, image_url, caption, sort_order), services(id, name, description, duration, price, category)")
@@ -32,17 +37,41 @@ export default async function ArtistPage({
         .select("id, rating, comment, created_at, profiles(name)")
         .eq("artist_id", id)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("bookings")
+        .select("date, status")
+        .eq("artist_id", id),
+      supabase
+        .from("artist_events")
+        .select("event_date")
+        .eq("artist_id", id),
+      supabase
+        .from("artist_blocked_dates")
+        .select("blocked_date")
+        .eq("artist_id", id),
     ]);
     rawArtist = artistRes.data;
     rawReviews = (reviewsRes.data ?? []) as unknown as typeof rawReviews;
+    bookings = bookingsRes.data ?? [];
+    events = eventsRes.data ?? [];
+    blocks = blocksRes.data ?? [];
   } catch (err) {
     console.error("DB unavailable on artist profile:", err);
   }
 
   if (!rawArtist) notFound();
 
+  // Increment profile view counter using service-role (RLS ignores it).
+  // Kept best-effort so a failure doesn't break the page.
+  try {
+    const admin = createAdminClient();
+    await admin.rpc("increment_profile_view", { aid: id });
+  } catch {}
+
+  const availability = buildAvailability(bookings, events, blocks);
+
   const artist = {
-    ...toProfileArtist(rawArtist),
+    ...toProfileArtist(rawArtist as Parameters<typeof toProfileArtist>[0]),
     reviews: rawReviews.map((r) => ({
       id: r.id,
       rating: r.rating,
@@ -52,5 +81,5 @@ export default async function ArtistPage({
     })),
   };
 
-  return <ArtistProfile artist={artist} user={user} />;
+  return <ArtistProfile artist={artist} user={user} availability={availability} />;
 }

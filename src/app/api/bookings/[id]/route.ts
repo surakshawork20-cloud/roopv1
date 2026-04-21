@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { z } from "zod";
+import { notifyBookingDecided } from "@/lib/notify";
 
+// Customer cancels their own pending/accepted booking.
 export async function DELETE(
   _: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -10,7 +13,6 @@ export async function DELETE(
   const { id } = await params;
 
   const supabase = await createClient();
-  // RLS will enforce that only the customer or the owning artist can update.
   const { error } = await supabase
     .from("bookings")
     .update({ status: "cancelled" })
@@ -20,23 +22,60 @@ export async function DELETE(
   return NextResponse.json({ ok: true });
 }
 
+// Artist transitions a booking: pending → accepted / rejected (with reason) / completed.
+const patchSchema = z.object({
+  action: z.enum(["accept", "reject", "complete"]),
+  reason: z.string().optional(),
+});
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getSessionUser();
-  if (!user || user.role !== "artist") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user || user.role !== "artist" || !user.artistId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { id } = await params;
-  const body = await req.json();
+
+  let body;
+  try {
+    body = patchSchema.parse(await req.json());
+  } catch {
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  }
+
+  if (body.action === "reject" && !body.reason?.trim()) {
+    return NextResponse.json({ error: "Reason is required when rejecting." }, { status: 400 });
+  }
+
+  const statusMap = { accept: "accepted", reject: "rejected", complete: "completed" } as const;
 
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("bookings")
+    .select("artist_id, status")
+    .eq("id", id)
+    .maybeSingle();
+  if (!existing || existing.artist_id !== user.artistId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { data, error } = await supabase
     .from("bookings")
-    .update({ status: body.status })
+    .update({
+      status: statusMap[body.action],
+      rejection_reason: body.action === "reject" ? body.reason : null,
+    })
     .eq("id", id)
     .select()
     .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  if (body.action === "accept" || body.action === "reject") {
+    notifyBookingDecided(id, body.action, body.reason).catch((e) => console.error("notify failed:", e));
+  }
+
   return NextResponse.json({ ok: true, booking: data });
 }

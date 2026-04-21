@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { BookingDrawer } from "./BookingDrawer";
+import { AvailabilityCalendar } from "./AvailabilityCalendar";
+import type { AvailabilityInput } from "@/lib/availability";
 
 type Artist = {
   id: string;
@@ -34,12 +36,14 @@ type Artist = {
 export function ArtistProfile({
   artist,
   user,
+  availability,
 }: {
   artist: Artist;
   user: { id: string; role: string; name: string } | null;
+  availability: AvailabilityInput;
 }) {
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [tab, setTab] = useState<"services" | "portfolio" | "reviews" | "about">("services");
+  const [tab, setTab] = useState<"services" | "portfolio" | "availability" | "reviews" | "about">("services");
   const [booking, setBooking] = useState<Artist["services"][0] | null>(null);
 
   const rating =
@@ -131,7 +135,7 @@ export function ArtistProfile({
                 disabled={artist.services.length === 0}
                 className="btn-primary shine w-full lg:w-auto"
               >
-                <Sparkles size={16} /> Book now
+                <Sparkles size={16} /> Request booking
               </button>
               {artist.services[0] && (
                 <div className="text-xs text-ink-dim mt-2 text-center lg:text-right">
@@ -146,7 +150,7 @@ export function ArtistProfile({
       <section className="mt-12">
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <div className="border-b border-border flex gap-6 overflow-x-auto">
-            {(["services", "portfolio", "reviews", "about"] as const).map((t) => (
+            {(["services", "portfolio", "availability", "reviews", "about"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -156,6 +160,7 @@ export function ArtistProfile({
               >
                 {t === "services" && `Services (${artist.services.length})`}
                 {t === "portfolio" && `Portfolio (${artist.portfolio.length})`}
+                {t === "availability" && "Availability"}
                 {t === "reviews" && `Reviews (${artist.reviews.length})`}
                 {t === "about" && "About"}
               </button>
@@ -219,6 +224,31 @@ export function ArtistProfile({
                     <div className="absolute inset-0 bg-gradient-to-t from-bg/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </button>
                 ))}
+              </motion.div>
+            )}
+
+            {tab === "availability" && (
+              <motion.div
+                key="availability"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="max-w-2xl"
+              >
+                <h3 className="font-display text-3xl mb-2">When {artist.displayName.split(" ")[0]} is available</h3>
+                <p className="text-ink-dim text-sm mb-6">
+                  Green days are wide open. Yellow means a slot is already taken. Red is off-limits — blocked or fully booked.
+                </p>
+                <div className="glass rounded-3xl p-6">
+                  <AvailabilityCalendar availability={availability} />
+                </div>
+                <button
+                  onClick={() => setBooking(artist.services[0] ?? null)}
+                  disabled={artist.services.length === 0}
+                  className="btn-primary shine mt-6"
+                >
+                  <Sparkles size={14} /> Request a booking
+                </button>
               </motion.div>
             )}
 
@@ -298,6 +328,7 @@ export function ArtistProfile({
         artist={artist}
         user={user}
         service={booking}
+        availability={availability}
         onClose={() => setBooking(null)}
         onChangeService={(s) => setBooking(s)}
       />
