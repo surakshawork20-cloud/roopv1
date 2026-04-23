@@ -232,16 +232,17 @@ export async function POST(req: NextRequest) {
         id: userId, email: a.email, name: a.name, role: "artist",
       });
 
-      const { data: artistRow, error: artistErr } = await admin.from("artists").insert({
+      // The signup trigger may have already created a default artist row — upsert by user_id.
+      const { data: artistRow, error: artistErr } = await admin.from("artists").upsert({
         user_id: userId,
         display_name: a.name, tagline: a.tagline, bio: a.bio,
         city: a.city, area: a.area,
         avatar_url: a.avatar_url, cover_url: a.cover_url,
         specialties: a.specialties, years_exp: a.years_exp,
         instagram: a.instagram, featured: a.featured, verified: a.verified,
-      }).select("id").single();
+      }, { onConflict: "user_id" }).select("id").single();
 
-      if (artistErr || !artistRow) throw artistErr || new Error("Failed to create artist");
+      if (artistErr || !artistRow) throw artistErr || new Error(`Failed to upsert artist for ${a.email}`);
 
       const artistId = artistRow.id;
       artistIds.push(artistId);
@@ -271,6 +272,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, artists: artistIds.length });
   } catch (err) {
     console.error("Seed error:", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Seed failed" }, { status: 500 });
+    const message =
+      err instanceof Error ? err.message :
+      typeof err === "object" && err && "message" in err ? String((err as { message: unknown }).message) :
+      JSON.stringify(err);
+    return NextResponse.json({ error: message || "Seed failed", raw: String(err) }, { status: 500 });
   }
 }
