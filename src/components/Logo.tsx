@@ -1,21 +1,38 @@
 import Link from "next/link";
+import Image from "next/image";
 
-export function Logo({ size = "md", withTagline = false }: { size?: "sm" | "md" | "lg"; withTagline?: boolean }) {
-  const fontSize = size === "lg" ? "text-4xl" : size === "sm" ? "text-xl" : "text-3xl";
-  const tagSize = size === "lg" ? "text-[10px]" : "text-[8px]";
+// Uses the brand logo file from /public/logo.png.
+// The image already includes the "Where the creation meets the moment" tagline.
+// `withTagline` controls image height: the nav uses a compact size where the tagline
+// is visually present but small; footer / auth hero use a larger size.
+export function Logo({
+  size = "md",
+  withTagline = false,
+}: {
+  size?: "sm" | "md" | "lg";
+  withTagline?: boolean;
+}) {
+  // Heights chosen so the "ROOP" lettermark lines up with our existing nav text scale.
+  // The image is roughly a square, so width scales proportionally.
+  const h = withTagline
+    ? size === "lg" ? 72 : size === "sm" ? 40 : 56
+    : size === "lg" ? 48 : size === "sm" ? 28 : 36;
+
+  // Intrinsic source dimensions (transparent logo file). width/height are
+  // required by next/image; we use them to compute aspect ratio.
+  const INTRINSIC = 1000;
+
   return (
-    <Link
-      href="/"
-      className="inline-flex flex-col leading-none group"
-    >
-      <span className={`font-display ${fontSize} tracking-[0.15em] text-gradient-primary font-semibold`}>
-        ROOP
-      </span>
-      {withTagline && (
-        <span className={`${tagSize} uppercase tracking-[0.3em] text-gold-deep mt-1 opacity-80`}>
-          Where creation meets the moment
-        </span>
-      )}
+    <Link href="/" className="inline-flex items-center shrink-0" aria-label="Roop — Where the creation meets the moment">
+      <Image
+        src="/logo.png"
+        alt="Roop"
+        width={INTRINSIC}
+        height={INTRINSIC}
+        priority
+        className="w-auto"
+        style={{ height: `${h}px` }}
+      />
     </Link>
   );
 }
