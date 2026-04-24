@@ -12,11 +12,11 @@ export function Logo({
   size?: "sm" | "md" | "lg";
   withTagline?: boolean;
 }) {
-  // Heights chosen so the "ROOP" lettermark lines up with our existing nav text scale.
-  // The image is roughly a square, so width scales proportionally.
+  // The PNG has ~25% transparent padding around the lettermark, so display heights
+  // are set generously to keep the ROOP wordmark visually comparable to body text.
   const h = withTagline
-    ? size === "lg" ? 72 : size === "sm" ? 40 : 56
-    : size === "lg" ? 48 : size === "sm" ? 28 : 36;
+    ? size === "lg" ? 110 : size === "sm" ? 64 : 84
+    : size === "lg" ? 76 : size === "sm" ? 44 : 60;
 
   // Intrinsic source dimensions (transparent logo file). width/height are
   // required by next/image; we use them to compute aspect ratio.
