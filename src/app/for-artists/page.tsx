@@ -4,7 +4,7 @@ import { Sparkles, Palette, TrendingUp, Calendar, Shield, Heart, Users, ArrowRig
 export const metadata = { title: "For Artists — Roop" };
 
 const features = [
-  { icon: TrendingUp, title: "3× your bookings", text: "Our top artists triple their monthly bookings within 90 days. Clients find you, not the other way around." },
+  { icon: TrendingUp, title: "3× your bookings", text: "Our top Artists triple their monthly bookings within 90 days. Clients find you, not the other way around." },
   { icon: Calendar, title: "One calendar, zero chaos", text: "No more WhatsApp scheduling. See your bookings, time slots, and payments in one beautiful dashboard." },
   { icon: Shield, title: "Verified clients", text: "Every customer is verified. No-shows are rare. Payments are guaranteed." },
   { icon: Heart, title: "Portfolio that converts", text: "Your work deserves more than an Instagram grid. Get a magazine-style profile that sells itself." },
@@ -13,7 +13,7 @@ const features = [
 ];
 
 const steps = [
-  "Create your free artist profile",
+  "Create your free Artist profile",
   "Upload your portfolio & list services",
   "Get discovered and start receiving bookings",
 ];
@@ -27,19 +27,19 @@ export default function ForArtistsPage() {
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-rose/15 rounded-full blur-3xl animate-float-slow" />
         </div>
         <div className="relative max-w-5xl mx-auto px-5 lg:px-8 text-center">
-          <div className="chip mx-auto mb-6"><Palette size={12} className="text-gold" />For artists</div>
+          <div className="chip mx-auto mb-6"><Palette size={12} className="text-gold" />For Artists</div>
           <h1 className="font-display text-6xl lg:text-8xl leading-[0.95] mb-6">
             Your craft deserves<br />
             <span className="italic text-gradient-primary">a stage.</span>
           </h1>
           <p className="text-xl text-ink-dim max-w-2xl mx-auto mb-10 leading-relaxed">
             Stop losing bookings to DMs and spreadsheets. Roop is the platform built
-            by and for India&apos;s beauty artists. Showcase your work, set your rates,
+            by and for India&apos;s beauty Artists. Showcase your work, set your rates,
             get paid on time.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/signup?role=artist" className="btn-primary shine">
-              Join as an artist <ArrowRight size={16} />
+              Join as an Artist <ArrowRight size={16} />
             </Link>
             <Link href="#how" className="btn-ghost">
               See how it works
@@ -95,7 +95,7 @@ export default function ForArtistsPage() {
             <div className="relative">
               <div className="chip mx-auto mb-6"><Sparkles size={12} className="text-gold" /> Ready to launch?</div>
               <h2 className="font-display text-5xl lg:text-6xl mb-4">
-                Create your artist profile<br />
+                Create your Artist profile<br />
                 <span className="italic text-gradient-primary">in seconds.</span>
               </h2>
               <p className="text-ink-dim mb-8 max-w-lg mx-auto">

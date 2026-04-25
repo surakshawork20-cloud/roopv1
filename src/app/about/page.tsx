@@ -32,13 +32,13 @@ export default function AboutPage() {
           <div>
             <h2 className="font-display text-4xl lg:text-5xl mb-5">Why Roop</h2>
             <p className="text-ink-dim mb-4 leading-relaxed">
-              We started Roop because booking a makeup artist in India shouldn&apos;t feel like a treasure hunt. Not for clients. Not for artists.
+              We started Roop because booking a makeup Artist in India shouldn&apos;t feel like a treasure hunt. Not for clients. Not for Artists.
             </p>
             <p className="text-ink-dim mb-4 leading-relaxed">
-              Every artist you see here is verified. Every portfolio is real. Every review is from a completed booking. No fakes, no filters, no bots.
+              Every Artist you see here is verified. Every portfolio is real. Every review is from a completed booking. No fakes, no filters, no bots.
             </p>
             <p className="text-ink-dim leading-relaxed">
-              Our artists keep a larger share of what they earn than anywhere else. Our clients get transparent pricing, no hidden fees, and a calendar you actually control.
+              Our Artists keep a larger share of what they earn than anywhere else. Our clients get transparent pricing, no hidden fees, and a calendar you actually control.
             </p>
           </div>
         </div>
@@ -49,9 +49,9 @@ export default function AboutPage() {
           <h2 className="font-display text-4xl lg:text-5xl text-center mb-14">What we stand for</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: Heart, title: "Artistry first", text: "We&apos;re a platform for artists, not a content farm. Your work gets the stage it deserves." },
-              { icon: ShieldCheck, title: "Trust, always", text: "Verified artists. Verified clients. Verified bookings. No games." },
-              { icon: Users, title: "Community", text: "Built with real artists across India. Every feature tested with real users." },
+              { icon: Heart, title: "Artistry first", text: "We&apos;re a platform for Artists, not a content farm. Your work gets the stage it deserves." },
+              { icon: ShieldCheck, title: "Trust, always", text: "Verified Artists. Verified clients. Verified bookings. No games." },
+              { icon: Users, title: "Community", text: "Built with real Artists across India. Every feature tested with real users." },
             ].map((v) => (
               <div key={v.title} className="glass rounded-3xl p-8 text-center">
                 <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/20 flex items-center justify-center mb-5">
@@ -69,11 +69,11 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto px-5 lg:px-8 text-center">
           <h2 className="font-display text-5xl lg:text-6xl mb-6">Join us.</h2>
           <p className="text-ink-dim mb-8 max-w-lg mx-auto">
-            Whether you&apos;re looking for the perfect artist or you are one, there&apos;s a place for you here.
+            Whether you&apos;re looking for the perfect Artist or you are one, there&apos;s a place for you here.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Link href="/discover" className="btn-primary shine">Find an artist <ArrowRight size={16} /></Link>
-            <Link href="/for-artists" className="btn-ghost">Join as artist</Link>
+            <Link href="/discover" className="btn-primary shine">Find an Artist <ArrowRight size={16} /></Link>
+            <Link href="/for-artists" className="btn-ghost">Join as Artist</Link>
           </div>
         </div>
       </section>

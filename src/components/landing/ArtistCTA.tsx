@@ -36,7 +36,7 @@ export function ArtistCTA() {
             <div className="lg:col-span-3">
               <div className="chip mb-5 bg-gold/10 border-gold/30 text-gold">
                 <Palette size={12} />
-                For artists
+                For Artists
               </div>
               <h2 className="font-display text-5xl lg:text-7xl leading-[0.95] mb-6">
                 Your craft
@@ -46,7 +46,7 @@ export function ArtistCTA() {
               <p className="text-ink-dim text-lg max-w-xl mb-10">
                 Stop losing bookings to DMs and spreadsheets. Showcase your work,
                 set your rates, control your calendar — and get paid on time.
-                Roop is the platform built by and for India&apos;s beauty artists.
+                Roop is the platform built by and for India&apos;s beauty Artists.
               </p>
 
               <div className="grid grid-cols-2 gap-3 mb-10">
@@ -65,7 +65,7 @@ export function ArtistCTA() {
 
               <div className="flex flex-wrap gap-4">
                 <Link href="/signup?role=artist" className="btn-primary shine">
-                  Join as an artist
+                  Join as an Artist
                   <ArrowUpRight size={16} />
                 </Link>
                 <Link href="/for-artists" className="btn-ghost">
@@ -102,7 +102,7 @@ export function ArtistCTA() {
                   ₹2.4L
                 </div>
                 <div className="text-sm text-ink-dim mb-6">
-                  earned by top 10% of artists
+                  earned by top 10% of Artists
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <div className="flex -space-x-2">
@@ -119,7 +119,7 @@ export function ArtistCTA() {
                       />
                     ))}
                   </div>
-                  <span className="text-ink-dim">+500 artists earning</span>
+                  <span className="text-ink-dim">+500 Artists earning</span>
                 </div>
               </motion.div>
             </div>

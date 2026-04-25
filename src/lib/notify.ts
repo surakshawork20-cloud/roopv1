@@ -91,7 +91,7 @@ export async function notifyBookingRequested(bookingId: string) {
   if (customer?.email) {
     await send({
       to: customer.email,
-      subject: "Your request is in — waiting on the artist",
+      subject: "Your request is in — waiting on the Artist",
       html: shell(
         `Thanks ${customer.name?.split(" ")[0] ?? ""}, we've got your request.`,
         `
@@ -101,7 +101,7 @@ export async function notifyBookingRequested(bookingId: string) {
             <li><strong>When:</strong> ${formatDateLong(new Date(b.date))} at ${b.time_slot}</li>
             <li><strong>Artist:</strong> ${artistName}</li>
           </ul>
-          <p>Any follow-up will come directly from the artist.</p>
+          <p>Any follow-up will come directly from the Artist.</p>
         `
       ),
     });
@@ -135,11 +135,11 @@ export async function notifyBookingDecided(
   if (action === "accept") {
     await send({
       to: b.profiles.email,
-      subject: `Confirmed: ${b.artists?.display_name ?? "Your artist"} accepted your request`,
+      subject: `Confirmed: ${b.artists?.display_name ?? "Your Artist"} accepted your request`,
       html: shell(
         `You're booked!`,
         `
-          <p><strong>${b.artists?.display_name ?? "Your artist"}</strong> accepted your request for <strong>${b.event_name ?? "your event"}</strong> on ${formatDateLong(new Date(b.date))} at ${b.time_slot}.</p>
+          <p><strong>${b.artists?.display_name ?? "Your Artist"}</strong> accepted your request for <strong>${b.event_name ?? "your event"}</strong> on ${formatDateLong(new Date(b.date))} at ${b.time_slot}.</p>
           <p>They'll be in touch shortly with any final logistics.</p>
         `
       ),
@@ -151,10 +151,10 @@ export async function notifyBookingDecided(
       html: shell(
         `Your request couldn't be accepted`,
         `
-          <p><strong>${b.artists?.display_name ?? "The artist"}</strong> couldn't take on your request this time.</p>
+          <p><strong>${b.artists?.display_name ?? "The Artist"}</strong> couldn't take on your request this time.</p>
           ${reason ? `<p style="background:rgba(201,169,126,0.08);border:1px solid rgba(201,169,126,0.2);border-radius:12px;padding:14px;font-style:italic">"${reason}"</p>` : ""}
-          <p>Plenty of other amazing artists are available — explore and book one you love.</p>
-          <a href="https://roop.in/discover" style="display:inline-block;background:linear-gradient(135deg,#D4B586,#A8875E);color:#1A0710;padding:12px 22px;border-radius:999px;font-weight:600;text-decoration:none">Discover artists</a>
+          <p>Plenty of other amazing Artists are available — explore and book one you love.</p>
+          <a href="https://roop.in/discover" style="display:inline-block;background:linear-gradient(135deg,#D4B586,#A8875E);color:#1A0710;padding:12px 22px;border-radius:999px;font-weight:600;text-decoration:none">Discover Artists</a>
         `
       ),
     });

@@ -135,7 +135,7 @@ export function BookingDrawer({
                     <div>
                       <div className="font-semibold mb-1">Sign in to send this request</div>
                       <div className="text-sm text-ink-dim mb-3">
-                        The artist needs your verified contact details.
+                        The Artist needs your verified contact details.
                       </div>
                       <div className="flex gap-2">
                         <Link href="/login" className="btn-ghost text-xs py-2 px-3">Log in</Link>
@@ -149,7 +149,7 @@ export function BookingDrawer({
               {step === 1 && service && (
                 <div>
                   <h3 className="font-display text-2xl mb-1">Choose a service</h3>
-                  <p className="text-sm text-ink-dim mb-5">Pick what you&apos;d like this artist to do.</p>
+                  <p className="text-sm text-ink-dim mb-5">Pick what you&apos;d like this Artist to do.</p>
                   <div className="space-y-3">
                     {artist.services.map((s) => (
                       <button
@@ -229,7 +229,7 @@ export function BookingDrawer({
               {step === 3 && service && (
                 <div>
                   <h3 className="font-display text-2xl mb-1">Event details</h3>
-                  <p className="text-sm text-ink-dim mb-5">Help the artist prep for your day.</p>
+                  <p className="text-sm text-ink-dim mb-5">Help the Artist prep for your day.</p>
 
                   <label className="block mb-4">
                     <span className="text-xs uppercase tracking-widest text-ink-dim mb-2 block flex items-center gap-1.5">
@@ -245,7 +245,7 @@ export function BookingDrawer({
 
                   <label className="block mb-4">
                     <span className="text-xs uppercase tracking-widest text-ink-dim mb-2 block flex items-center gap-1.5">
-                      <MapPin size={12} className="text-gold" /> Location where artist should arrive
+                      <MapPin size={12} className="text-gold" /> Location where Artist should arrive
                     </span>
                     <input
                       value={address}

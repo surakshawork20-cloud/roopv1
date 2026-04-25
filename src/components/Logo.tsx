@@ -11,8 +11,8 @@ export function Logo({
   withTagline?: boolean;
 }) {
   const h = withTagline
-    ? size === "lg" ? 80 : size === "sm" ? 48 : 64
-    : size === "lg" ? 56 : size === "sm" ? 32 : 44;
+    ? size === "lg" ? 104 : size === "sm" ? 64 : 84
+    : size === "lg" ? 76 : size === "sm" ? 44 : 60;
 
   // Intrinsic dimensions of the cropped PNG.
   const W = 2400;

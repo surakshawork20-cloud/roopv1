@@ -35,12 +35,12 @@ export function FeaturedArtists({ artists }: { artists: Artist[] }) {
               behind the looks.
             </h2>
             <p className="mt-4 text-ink-dim max-w-xl">
-              The most talented, most requested, most loved artists on Roop —
+              The most talented, most requested, most loved Artists on Roop —
               this week.
             </p>
           </div>
           <Link href="/discover" className="btn-ghost group shrink-0">
-            Browse all artists
+            Browse all Artists
             <ArrowUpRight size={16} className="group-hover:rotate-45 transition-transform" />
           </Link>
         </div>

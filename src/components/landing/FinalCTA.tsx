@@ -25,12 +25,12 @@ export function FinalCTA() {
             starts here.
           </h2>
           <p className="mt-8 text-lg text-ink-dim max-w-xl mx-auto">
-            Thousands of looks, hundreds of artists, one beautiful platform.
+            Thousands of looks, hundreds of Artists, one beautiful platform.
             Whatever you&apos;re getting ready for — we&apos;ve got you.
           </p>
           <div className="mt-10 flex flex-wrap gap-4 justify-center">
             <Link href="/discover" className="btn-primary shine">
-              Find your artist
+              Find your Artist
               <ArrowRight size={16} />
             </Link>
             <Link href="/signup" className="btn-ghost">

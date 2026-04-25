@@ -33,7 +33,7 @@ export function Hero() {
               className="chip mb-6"
             >
               <Sparkles size={12} className="text-gold" />
-              <span>India&apos;s most curated artist marketplace</span>
+              <span>India&apos;s most curated Artist marketplace</span>
             </motion.div>
 
             <motion.h1
@@ -50,7 +50,7 @@ export function Hero() {
                     "linear-gradient(120deg, var(--gold), var(--rose), var(--violet), var(--gold))",
                 }}
               >
-                artists
+                Artists
               </span>
               <br />
               behind your most{" "}
@@ -83,7 +83,7 @@ export function Hero() {
               className="mt-8 text-lg text-ink-dim max-w-xl leading-relaxed"
             >
               Weddings. Editorial shoots. Fashion weeks. First dates. Whatever the
-              occasion — discover verified makeup artists, hairstylists and beauty
+              occasion — discover verified makeup Artists, hairstylists and beauty
               pros who turn moments into memories.
             </motion.p>
 
@@ -94,12 +94,12 @@ export function Hero() {
               className="mt-10 flex flex-wrap gap-4 items-center"
             >
               <Link href="/discover" className="btn-primary shine">
-                Discover artists
+                Discover Artists
                 <ArrowRight size={16} />
               </Link>
               <Link href="/for-artists" className="btn-ghost">
                 <Play size={14} fill="currentColor" />
-                For artists
+                For Artists
               </Link>
             </motion.div>
 

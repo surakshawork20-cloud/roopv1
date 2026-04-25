@@ -12,14 +12,14 @@ const testimonials = [
   },
   {
     quote:
-      "As an artist, I&apos;ve tripled my bookings in three months. The dashboard shows me exactly what&apos;s working. Clients show up knowing my style already.",
+      "As an Artist, I&apos;ve tripled my bookings in three months. The dashboard shows me exactly what&apos;s working. Clients show up knowing my style already.",
     name: "Ananya Kapoor",
     role: "Artist · Mumbai",
     img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop",
   },
   {
     quote:
-      "Booked a grooming artist for my wedding day and my photos look unreal. Didn&apos;t even know men could use a platform like this — glad I found it.",
+      "Booked a grooming Artist for my wedding day and my photos look unreal. Didn&apos;t even know men could use a platform like this — glad I found it.",
     name: "Rohan Mehta",
     role: "Groom · Delhi",
     img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",

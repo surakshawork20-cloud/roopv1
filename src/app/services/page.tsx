@@ -6,7 +6,7 @@ export const metadata = { title: "Services — Roop" };
 const services = [
   {
     name: "Bridal",
-    desc: "The most meaningful day of your life deserves an artist who listens, plans, and shows up ready. From intimate sangeets to grand ceremonies.",
+    desc: "The most meaningful day of your life deserves an Artist who listens, plans, and shows up ready. From intimate sangeets to grand ceremonies.",
     img: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&h=900&fit=crop",
     price: "from ₹8,000",
     sessions: ["Trial & Planning", "Sangeet & Mehndi", "Wedding Day", "Reception Look"],
@@ -58,7 +58,7 @@ export default function ServicesPage() {
             <br /><span className="italic text-gradient-primary">beautiful.</span>
           </h1>
           <p className="text-lg text-ink-dim max-w-xl mx-auto">
-            Every artist, every style, every occasion. Curated categories to help you find exactly what you&apos;re after.
+            Every Artist, every style, every occasion. Curated categories to help you find exactly what you&apos;re after.
           </p>
         </div>
       </section>
@@ -77,7 +77,7 @@ export default function ServicesPage() {
                   ))}
                 </div>
                 <Link href={`/discover?category=${encodeURIComponent(s.name)}`} className="btn-primary shine group">
-                  Browse {s.name} artists
+                  Browse {s.name} Artists
                   <ArrowUpRight size={16} className="group-hover:rotate-45 transition-transform" />
                 </Link>
               </div>

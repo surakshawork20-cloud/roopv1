@@ -4,7 +4,7 @@ import { toCardArtist } from "@/lib/supabase/shape";
 
 export const metadata = {
   title: "Discover Artists — Roop",
-  description: "Browse India's most talented makeup artists, hairstylists, and beauty professionals.",
+  description: "Browse India's most talented makeup Artists, hairstylists, and beauty professionals.",
 };
 
 export const dynamic = "force-dynamic";

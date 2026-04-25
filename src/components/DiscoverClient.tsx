@@ -77,7 +77,7 @@ export function DiscoverClient({ artists }: { artists: Artist[] }) {
           >
             <div className="chip mb-5">
               <Sparkles size={12} className="text-gold" />
-              {artists.length} verified artists
+              {artists.length} verified Artists
             </div>
             <h1 className="font-display text-5xl lg:text-7xl leading-[0.95]">
               Find your
@@ -85,7 +85,7 @@ export function DiscoverClient({ artists }: { artists: Artist[] }) {
               <span className="italic text-gradient-primary">signature look.</span>
             </h1>
             <p className="mt-5 text-ink-dim max-w-xl">
-              Filter by style, city, or budget. Every artist is hand-reviewed. Every portfolio is real.
+              Filter by style, city, or budget. Every Artist is hand-reviewed. Every portfolio is real.
             </p>
           </motion.div>
 
@@ -159,12 +159,12 @@ export function DiscoverClient({ artists }: { artists: Artist[] }) {
       <section className="pb-24">
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <div className="mb-6 text-sm text-ink-dim">
-            Showing <span className="text-ink font-semibold">{filtered.length}</span> of {artists.length} artists
+            Showing <span className="text-ink font-semibold">{filtered.length}</span> of {artists.length} Artists
           </div>
           {filtered.length === 0 ? (
             <div className="py-24 text-center border border-dashed border-border rounded-3xl">
               <div className="text-4xl mb-3">✨</div>
-              <p className="font-display text-2xl mb-2">No artists match your filters.</p>
+              <p className="font-display text-2xl mb-2">No Artists match your filters.</p>
               <p className="text-ink-dim mb-6">Try loosening the criteria — there&apos;s magic somewhere.</p>
               <button onClick={reset} className="btn-primary">Reset filters</button>
             </div>

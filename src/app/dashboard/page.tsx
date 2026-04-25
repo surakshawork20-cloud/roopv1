@@ -61,7 +61,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Link href="/discover" className="btn-primary shine self-start">
-            <Sparkles size={14} /> Book another artist
+            <Sparkles size={14} /> Book another Artist
           </Link>
         </div>
 
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
 
         {pending.length > 0 && (
           <>
-            <h2 className="font-display text-3xl mb-5">Waiting on artist</h2>
+            <h2 className="font-display text-3xl mb-5">Waiting on Artist</h2>
             <div className="grid gap-4 mb-14">
               {pending.map((b) => <BookingCard key={b.id} booking={b} canCancel />)}
             </div>
@@ -84,8 +84,8 @@ export default async function DashboardPage() {
         {active.length === 0 ? (
           <EmptyState
             title="No upcoming bookings"
-            body="Ready for your next glow-up? Discover artists and book your moment."
-            cta="Discover artists"
+            body="Ready for your next glow-up? Discover Artists and book your moment."
+            cta="Discover Artists"
             href="/discover"
           />
         ) : (

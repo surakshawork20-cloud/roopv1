@@ -89,10 +89,10 @@ export function AuthForm({
         <div className="relative z-10 space-y-6 max-w-md">
           <div className="chip"><Sparkles size={12} className="text-gold" /> Welcome back to beautiful</div>
           <h1 className="font-display text-5xl xl:text-6xl leading-[1.05]">
-            Your <span className="italic text-gradient-rose">glow up</span> starts with the right artist.
+            Your <span className="italic text-gradient-rose">glow up</span> starts with the right Artist.
           </h1>
           <p className="text-ink-dim">
-            Join thousands booking India&apos;s most talented makeup artists, hairstylists, and beauty
+            Join thousands booking India&apos;s most talented makeup Artists, hairstylists, and beauty
             professionals — all in one curated space.
           </p>
           <div className="flex items-center gap-4 pt-4">
@@ -109,7 +109,7 @@ export function AuthForm({
         </div>
 
         <div className="relative z-10 text-xs text-ink-dim">
-          &quot;The booking experience was seamless. Found the perfect artist for my wedding in minutes.&quot; — Priya S.
+          &quot;The booking experience was seamless. Found the perfect Artist for my wedding in minutes.&quot; — Priya S.
         </div>
       </div>
 
@@ -155,7 +155,7 @@ export function AuthForm({
                     : "text-ink-dim hover:text-ink"
                 }`}
               >
-                <Palette size={16} /> I&apos;m an artist
+                <Palette size={16} /> I&apos;m an Artist
               </button>
             </div>
           )}

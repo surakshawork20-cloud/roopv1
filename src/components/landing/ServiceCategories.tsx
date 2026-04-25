@@ -9,42 +9,42 @@ const categories = [
     desc: "From sangeet to the big day — crafted looks that last 12+ hours.",
     img: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&h=1200&fit=crop",
     accent: "from-rose/70 via-plum/60 to-bg",
-    count: "180+ artists",
+    count: "180+ Artists",
   },
   {
     name: "Party & Glam",
     desc: "Birthday, cocktail, date night — show up like the main character.",
     img: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=900&h=1200&fit=crop",
     accent: "from-violet/70 via-plum/60 to-bg",
-    count: "240+ artists",
+    count: "240+ Artists",
   },
   {
     name: "Editorial & HD",
     desc: "Lookbooks, campaigns, magazine covers. Camera-ready artistry.",
     img: "https://images.unsplash.com/photo-1503104834685-7205e8607eb9?w=900&h=1200&fit=crop",
     accent: "from-gold/70 via-amber/50 to-bg",
-    count: "90+ artists",
+    count: "90+ Artists",
   },
   {
     name: "Men's Grooming",
     desc: "Wedding looks, beard sculpting, grooms-to-be. Yes, you deserve this.",
     img: "https://images.unsplash.com/photo-1581992652564-44c42f5ad3ad?w=900&h=1200&fit=crop",
     accent: "from-emerald/70 via-teal/50 to-bg",
-    count: "65+ artists",
+    count: "65+ Artists",
   },
   {
     name: "Hair & Style",
     desc: "Blowouts, updos, color, extensions — the full crown treatment.",
     img: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=900&h=1200&fit=crop",
     accent: "from-ruby/70 via-wine/50 to-bg",
-    count: "320+ artists",
+    count: "320+ Artists",
   },
   {
     name: "SFX & Artistic",
     desc: "Fashion week, film, theatre, avant-garde. Where art meets skin.",
     img: "https://images.unsplash.com/photo-1596704017254-9b121068fb31?w=900&h=1200&fit=crop",
     accent: "from-violet/70 via-ruby/60 to-bg",
-    count: "40+ artists",
+    count: "40+ Artists",
   },
 ];
 
@@ -101,7 +101,7 @@ export function ServiceCategories() {
                   </h3>
                   <p className="text-ink-dim text-sm max-w-xs leading-relaxed">{c.desc}</p>
                   <div className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-gold opacity-0 group-hover:opacity-100 transition-opacity">
-                    Explore artists <ArrowUpRight size={14} />
+                    Explore Artists <ArrowUpRight size={14} />
                   </div>
                 </div>
               </Link>

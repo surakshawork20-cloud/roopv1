@@ -6,7 +6,7 @@ const steps = [
   {
     num: "01",
     icon: Search,
-    title: "Discover your artist",
+    title: "Discover your Artist",
     text: "Filter by style, city, budget, and availability. Every profile is verified, with real portfolios and honest reviews.",
   },
   {
@@ -19,7 +19,7 @@ const steps = [
     num: "03",
     icon: Sparkles,
     title: "Show up stunning",
-    text: "The artist arrives ready. You relax, transform, and leave feeling like the most beautiful version of yourself.",
+    text: "The Artist arrives ready. You relax, transform, and leave feeling like the most beautiful version of yourself.",
   },
 ];
 

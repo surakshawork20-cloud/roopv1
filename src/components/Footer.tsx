@@ -12,7 +12,7 @@ export function Footer() {
             <Logo size="lg" withTagline />
             <p className="mt-6 text-ink-dim max-w-sm text-sm leading-relaxed">
               India&apos;s curated marketplace for beauty artistry. Discover
-              verified makeup artists, hairstylists, and beauty professionals.
+              verified makeup Artists, hairstylists, and beauty professionals.
               Book moments that matter.
             </p>
             <div className="mt-6 flex items-center gap-3">
@@ -36,7 +36,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-xs uppercase tracking-widest text-gold mb-4">For artists</h4>
+            <h4 className="text-xs uppercase tracking-widest text-gold mb-4">For Artists</h4>
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/for-artists" className="text-ink-dim hover:text-ink inline-flex items-center gap-1">Join Roop <ArrowUpRight size={12} /></Link></li>
               <li><Link href="/signup?role=artist" className="text-ink-dim hover:text-ink">Artist Signup</Link></li>

@@ -54,7 +54,7 @@ export function Nav({ user }: { user: User }) {
       }`}
     >
       <div className="max-w-7xl mx-auto px-5 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-20 lg:h-24">
           <Logo />
 
           <nav className="hidden lg:flex items-center gap-1">
@@ -108,7 +108,7 @@ export function Nav({ user }: { user: User }) {
                           href="/for-artists"
                           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-surface-2"
                         >
-                          <Sparkles size={16} /> Become an artist
+                          <Sparkles size={16} /> Become an Artist
                         </Link>
                       )}
                       <button

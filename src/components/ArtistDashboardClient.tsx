@@ -192,7 +192,7 @@ function OverviewTab({ artist, bookings, upcoming, earnings, avgRating, reviewCo
             <TipItem done={artist.bio.length > 80} text="Write a standout bio" />
             <TipItem done={!!artist.upiId || !!artist.bankAccountNo} text="Add payment details" />
             <TipItem done={artist.cancellationPolicy.length > 10} text="Publish a cancellation policy" />
-            <TipItem done={artist.agreedToTerms} text="Sign the artist declaration" />
+            <TipItem done={artist.agreedToTerms} text="Sign the Artist declaration" />
           </ul>
         </div>
       </div>
