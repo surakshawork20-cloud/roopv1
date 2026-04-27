@@ -8,10 +8,12 @@ import {
   Plus, Trash2, Edit3, X, Loader2, BadgeCheck, ArrowUpRight,
   LayoutDashboard, Image as ImageIcon, Settings, Check,
   CalendarX, CalendarPlus, ClipboardList, Eye, IndianRupee,
-  CreditCard, FileSignature, Phone, Mail,
+  CreditCard, FileSignature, Instagram, Award, Compass, Wallet,
+  Building2, MessageSquare,
 } from "lucide-react";
 import { formatPrice, formatDateLong } from "@/lib/utils";
 import { AvailabilityCalendar } from "./AvailabilityCalendar";
+import { ImagePicker } from "./ImagePicker";
 import type { AvailabilityInput } from "@/lib/availability";
 import { isoDay } from "@/lib/availability";
 import { format } from "date-fns";
@@ -49,12 +51,13 @@ type Tab = "overview" | "requests" | "bookings" | "calendar" | "services" | "por
 
 export function ArtistDashboardClient({
   artist, bookings, services, portfolio, blockedDates, events, subscriptions,
-  availability, earnings, avgRating, reviewCount, userName,
+  availability, earnings, avgRating, reviewCount, userName, userId,
 }: {
   artist: Artist; bookings: Booking[]; services: Service[]; portfolio: PortfolioItem[];
   blockedDates: BlockedDate[]; events: ArtistEvent[]; subscriptions: Subscription[];
   availability: AvailabilityInput;
-  earnings: number; avgRating: number; reviewCount: number; userName: string;
+  earnings: number; avgRating: number; reviewCount: number;
+  userName: string; userId: string;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const pendingRequests = bookings.filter((b) => b.status === "pending");
@@ -126,8 +129,8 @@ export function ArtistDashboardClient({
             />
           )}
           {tab === "services" && <ServicesTab key="services" services={services} artistId={artist.id} />}
-          {tab === "portfolio" && <PortfolioTab key="portfolio" portfolio={portfolio} artistId={artist.id} />}
-          {tab === "profile" && <ProfileTab key="profile" artist={artist} />}
+          {tab === "portfolio" && <PortfolioTab key="portfolio" portfolio={portfolio} artistId={artist.id} userId={userId} />}
+          {tab === "profile" && <ProfileTab key="profile" artist={artist} userId={userId} />}
           {tab === "payments" && <PaymentsTab key="payments" subscriptions={subscriptions} artistId={artist.id} />}
         </AnimatePresence>
       </div>
@@ -741,28 +744,36 @@ function ServiceEditor({ initial, artistId, onClose, onSaved }: {
 // ============================================================
 // Portfolio
 // ============================================================
-function PortfolioTab({ portfolio: initial, artistId }: { portfolio: PortfolioItem[]; artistId: string }) {
+function PortfolioTab({ portfolio: initial, artistId, userId }: {
+  portfolio: PortfolioItem[]; artistId: string; userId: string;
+}) {
   const router = useRouter();
   const [portfolio, setPortfolio] = useState(initial);
-  const [url, setUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function add() {
-    if (!url) return;
-    setLoading(true);
-    const res = await fetch("/api/portfolio", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ artistId, imageUrl: url, caption, order: portfolio.length }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    if (!imageUrl) return;
+    setAdding(true); setError(null);
+    try {
+      const res = await fetch("/api/portfolio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artistId, imageUrl, caption, order: portfolio.length }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add");
       setPortfolio((p) => [...p, data.item]);
-      setUrl(""); setCaption("");
+      setImageUrl(null);
+      setCaption("");
       router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setAdding(false);
     }
-    setLoading(false);
   }
 
   async function remove(id: string) {
@@ -774,25 +785,57 @@ function PortfolioTab({ portfolio: initial, artistId }: { portfolio: PortfolioIt
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-      <div className="glass rounded-3xl p-6 mb-8">
-        <h3 className="font-display text-2xl mb-4">Add portfolio image</h3>
-        <div className="grid lg:grid-cols-[1fr_1fr_auto] gap-3">
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Image URL" className="px-4 py-3 rounded-xl bg-surface border border-border focus:border-gold/50 outline-none" />
-          <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Optional caption" className="px-4 py-3 rounded-xl bg-surface border border-border focus:border-gold/50 outline-none" />
-          <button onClick={add} disabled={loading || !url} className="btn-primary disabled:opacity-50">
-            {loading ? <Loader2 className="animate-spin" size={14} /> : <><Plus size={14} />Add</>}
-          </button>
+      <div className="glass rounded-3xl p-6 lg:p-8 mb-8">
+        <div className="mb-5">
+          <h3 className="font-display text-2xl">Add portfolio image</h3>
+          <p className="text-sm text-ink-dim mt-0.5">Drag in a photo, browse your device, or paste a hosted URL.</p>
+        </div>
+
+        <div className="grid lg:grid-cols-[1.4fr_1fr] gap-6 items-start">
+          <ImagePicker
+            bucket="portfolio"
+            folder={userId}
+            value={imageUrl}
+            onChange={setImageUrl}
+            aspect="portrait"
+            helper="Tall (4:5) photos look best in your gallery."
+          />
+          <div className="space-y-4">
+            <ModalField label="Caption (optional)">
+              <input
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="e.g. Bridal — sangeet evening"
+                className="dash-input"
+              />
+            </ModalField>
+            <button
+              onClick={add}
+              disabled={!imageUrl || adding}
+              className="btn-primary w-full disabled:opacity-50"
+            >
+              {adding ? <Loader2 className="animate-spin" size={14} /> : <><Plus size={14} />Add to gallery</>}
+            </button>
+            {!imageUrl && (
+              <p className="text-[11px] text-ink-dim italic text-center">
+                Pick or paste an image to enable.
+              </p>
+            )}
+            {error && <p className="text-xs text-rose">{error}</p>}
+          </div>
         </div>
       </div>
 
       {portfolio.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-border rounded-3xl">
           <p className="font-display text-2xl mb-2">Your portfolio is empty</p>
+          <p className="text-sm text-ink-dim">Add 5+ images so clients can see your range.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {portfolio.map((p) => (
             <div key={p.id} className="group relative aspect-[4/5] rounded-2xl overflow-hidden border border-border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
               <button onClick={() => remove(p.id)} className="absolute top-2 right-2 w-8 h-8 rounded-full bg-rose/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Trash2 size={12} />
@@ -810,7 +853,7 @@ function PortfolioTab({ portfolio: initial, artistId }: { portfolio: PortfolioIt
 // ============================================================
 type ProfileSection = "basic" | "professional" | "payments" | "cancellation" | "agreement";
 
-function ProfileTab({ artist }: { artist: Artist }) {
+function ProfileTab({ artist, userId }: { artist: Artist; userId: string }) {
   const router = useRouter();
   const [section, setSection] = useState<ProfileSection>("basic");
   const [form, setForm] = useState(artist);
@@ -856,83 +899,150 @@ function ProfileTab({ artist }: { artist: Artist }) {
           ))}
         </div>
 
-        <div className="glass rounded-3xl p-6 lg:p-8">
+        <div className="space-y-5">
           {section === "basic" && (
-            <div className="space-y-5">
+            <>
               <SectionHead title="Basic information" subtitle="How customers see you at a glance." />
-              <ModalField label="Display name"><input value={form.displayName} onChange={(e) => setForm({...form, displayName: e.target.value})} className="dash-input" /></ModalField>
-              <ModalField label="Tagline"><input value={form.tagline} onChange={(e) => setForm({...form, tagline: e.target.value})} className="dash-input" /></ModalField>
-              <ModalField label="About you"><textarea rows={5} value={form.bio} onChange={(e) => setForm({...form, bio: e.target.value})} className="dash-input resize-none" /></ModalField>
-              <Grid>
-                <ModalField label="City"><input value={form.city} onChange={(e) => setForm({...form, city: e.target.value})} className="dash-input" /></ModalField>
-                <ModalField label="Area"><input value={form.area} onChange={(e) => setForm({...form, area: e.target.value})} className="dash-input" /></ModalField>
-              </Grid>
-              <ModalField label="Instagram handle (without @)"><input value={form.instagram ?? ""} onChange={(e) => setForm({...form, instagram: e.target.value})} className="dash-input" placeholder="yourname" /></ModalField>
-              <ModalField label="Avatar URL"><input value={form.avatarUrl} onChange={(e) => setForm({...form, avatarUrl: e.target.value})} className="dash-input" /></ModalField>
-              <ModalField label="Cover image URL"><input value={form.coverUrl} onChange={(e) => setForm({...form, coverUrl: e.target.value})} className="dash-input" /></ModalField>
-            </div>
+              <FieldCard title="Identity" icon={Users}>
+                <ModalField label="Display name">
+                  <input value={form.displayName} onChange={(e) => setForm({...form, displayName: e.target.value})} className="dash-input" />
+                </ModalField>
+                <ModalField label="Tagline">
+                  <input value={form.tagline} onChange={(e) => setForm({...form, tagline: e.target.value})} className="dash-input" placeholder="One line that captures your style" />
+                </ModalField>
+              </FieldCard>
+
+              <FieldCard title="About you" icon={MessageSquare}>
+                <ModalField label="Tell your story">
+                  <textarea rows={5} value={form.bio} onChange={(e) => setForm({...form, bio: e.target.value})} className="dash-input resize-none" placeholder="Where you trained, the looks you specialise in, who you love to work with…" />
+                </ModalField>
+              </FieldCard>
+
+              <FieldCard title="Where you work" icon={MapPin}>
+                <Grid>
+                  <ModalField label="City"><input value={form.city} onChange={(e) => setForm({...form, city: e.target.value})} className="dash-input" /></ModalField>
+                  <ModalField label="Area"><input value={form.area} onChange={(e) => setForm({...form, area: e.target.value})} className="dash-input" /></ModalField>
+                </Grid>
+              </FieldCard>
+
+              <FieldCard title="Online presence" icon={Instagram}>
+                <ModalField label="Instagram handle (without @)">
+                  <input value={form.instagram ?? ""} onChange={(e) => setForm({...form, instagram: e.target.value})} className="dash-input" placeholder="yourname" />
+                </ModalField>
+              </FieldCard>
+
+              <FieldCard title="Brand visuals" icon={ImageIcon}>
+                <p className="text-xs text-ink-dim -mt-1 mb-1">Avatar shows on cards across the platform. Cover is the banner on your public profile.</p>
+                <div className="grid md:grid-cols-2 gap-5">
+                  <ImagePicker
+                    bucket="avatars"
+                    folder={userId}
+                    value={form.avatarUrl}
+                    onChange={(url) => setForm({...form, avatarUrl: url ?? ""})}
+                    aspect="square"
+                    label="Avatar"
+                  />
+                  <ImagePicker
+                    bucket="avatars"
+                    folder={userId}
+                    value={form.coverUrl}
+                    onChange={(url) => setForm({...form, coverUrl: url ?? ""})}
+                    aspect="wide"
+                    label="Cover image"
+                  />
+                </div>
+              </FieldCard>
+            </>
           )}
 
           {section === "professional" && (
-            <div className="space-y-5">
+            <>
               <SectionHead title="Professional details" subtitle="Help clients trust your craft." />
-              <Grid>
-                <ModalField label="Specialties (comma-sep.)"><input value={form.specialties} onChange={(e) => setForm({...form, specialties: e.target.value})} className="dash-input" /></ModalField>
-                <ModalField label="Years of experience"><input type="number" value={form.yearsExp} onChange={(e) => setForm({...form, yearsExp: Number(e.target.value)})} className="dash-input" min={0} /></ModalField>
-              </Grid>
-              <ModalField label="Experience summary"><textarea rows={4} value={form.experienceSummary} onChange={(e) => setForm({...form, experienceSummary: e.target.value})} placeholder="Training, notable clients, awards…" className="dash-input resize-none" /></ModalField>
-              <ModalField label="Travel radius (km)"><input type="number" value={form.travelRadiusKm} onChange={(e) => setForm({...form, travelRadiusKm: Number(e.target.value)})} className="dash-input" min={0} /></ModalField>
-            </div>
+              <FieldCard title="Skills" icon={Sparkles}>
+                <Grid>
+                  <ModalField label="Specialties (comma-sep.)">
+                    <input value={form.specialties} onChange={(e) => setForm({...form, specialties: e.target.value})} className="dash-input" placeholder="Bridal, Editorial, HD Makeup" />
+                  </ModalField>
+                  <ModalField label="Years of experience">
+                    <input type="number" value={form.yearsExp} onChange={(e) => setForm({...form, yearsExp: Number(e.target.value)})} className="dash-input" min={0} />
+                  </ModalField>
+                </Grid>
+              </FieldCard>
+
+              <FieldCard title="Experience" icon={Award}>
+                <ModalField label="Summary">
+                  <textarea rows={4} value={form.experienceSummary} onChange={(e) => setForm({...form, experienceSummary: e.target.value})} placeholder="Training, notable clients, awards…" className="dash-input resize-none" />
+                </ModalField>
+              </FieldCard>
+
+              <FieldCard title="Reach" icon={Compass}>
+                <ModalField label="Travel radius (km)">
+                  <input type="number" value={form.travelRadiusKm} onChange={(e) => setForm({...form, travelRadiusKm: Number(e.target.value)})} className="dash-input" min={0} />
+                </ModalField>
+              </FieldCard>
+            </>
           )}
 
           {section === "payments" && (
-            <div className="space-y-5">
+            <>
               <SectionHead title="Payments & settlement" subtitle="Where we send your earnings. Only visible to you." />
-              <ModalField label="UPI ID"><input value={form.upiId} onChange={(e) => setForm({...form, upiId: e.target.value})} placeholder="yourname@upi" className="dash-input" /></ModalField>
-              <div className="h-px bg-border my-2" />
-              <ModalField label="Bank account holder name"><input value={form.bankAccountName} onChange={(e) => setForm({...form, bankAccountName: e.target.value})} className="dash-input" /></ModalField>
-              <Grid>
-                <ModalField label="Bank account number"><input value={form.bankAccountNo} onChange={(e) => setForm({...form, bankAccountNo: e.target.value})} className="dash-input" /></ModalField>
-                <ModalField label="IFSC"><input value={form.bankIfsc} onChange={(e) => setForm({...form, bankIfsc: e.target.value})} className="dash-input uppercase" /></ModalField>
-              </Grid>
-            </div>
+              <FieldCard title="UPI" icon={Wallet}>
+                <ModalField label="UPI ID">
+                  <input value={form.upiId} onChange={(e) => setForm({...form, upiId: e.target.value})} placeholder="yourname@upi" className="dash-input" />
+                </ModalField>
+              </FieldCard>
+
+              <FieldCard title="Bank account" icon={Building2}>
+                <ModalField label="Account holder name">
+                  <input value={form.bankAccountName} onChange={(e) => setForm({...form, bankAccountName: e.target.value})} className="dash-input" />
+                </ModalField>
+                <Grid>
+                  <ModalField label="Account number"><input value={form.bankAccountNo} onChange={(e) => setForm({...form, bankAccountNo: e.target.value})} className="dash-input" /></ModalField>
+                  <ModalField label="IFSC"><input value={form.bankIfsc} onChange={(e) => setForm({...form, bankIfsc: e.target.value})} className="dash-input uppercase" /></ModalField>
+                </Grid>
+              </FieldCard>
+            </>
           )}
 
           {section === "cancellation" && (
-            <div className="space-y-5">
+            <>
               <SectionHead title="Cancellation policy" subtitle="What happens if a client cancels? State it clearly." />
-              <ModalField label="Your policy">
-                <textarea
-                  rows={8}
-                  value={form.cancellationPolicy}
-                  onChange={(e) => setForm({...form, cancellationPolicy: e.target.value})}
-                  placeholder={"e.g. \n• Free cancellation up to 7 days before the event\n• 50% charge within 7 days\n• No refund within 48 hours"}
-                  className="dash-input resize-none"
-                />
-              </ModalField>
-            </div>
+              <FieldCard title="Your policy" icon={CalendarX}>
+                <ModalField label="Spell out the rules — clients see this before booking">
+                  <textarea
+                    rows={8}
+                    value={form.cancellationPolicy}
+                    onChange={(e) => setForm({...form, cancellationPolicy: e.target.value})}
+                    placeholder={"e.g.\n• Free cancellation up to 7 days before the event\n• 50% charge within 7 days\n• No refund within 48 hours"}
+                    className="dash-input resize-none"
+                  />
+                </ModalField>
+              </FieldCard>
+            </>
           )}
 
           {section === "agreement" && (
-            <div className="space-y-5">
+            <>
               <SectionHead title="Declaration & agreement" subtitle="Confirm you understand Roop's terms before taking bookings." />
-              <div className="text-sm text-ink-dim leading-relaxed space-y-2 mb-4">
-                <p>By checking below you confirm:</p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>You are the account holder and all work shown is original or licensed.</li>
-                  <li>You will honour bookings accepted via Roop and communicate delays promptly.</li>
-                  <li>You agree to the ₹699/month listing fee and Roop&apos;s content / behaviour guidelines.</li>
-                  <li>You understand payments are settled directly by the customer; Roop is not a payment gateway for event fees.</li>
-                </ul>
-              </div>
-              <label className="flex items-center gap-3 p-4 border border-border rounded-2xl cursor-pointer hover:border-gold/40">
-                <input type="checkbox" checked={form.agreedToTerms} onChange={(e) => setForm({...form, agreedToTerms: e.target.checked})} className="w-5 h-5 accent-gold" />
-                <span className="text-sm">I agree to the above terms.</span>
-              </label>
-            </div>
+              <FieldCard title="Terms" icon={FileSignature}>
+                <div className="text-sm text-ink-dim leading-relaxed space-y-2">
+                  <p>By checking below you confirm:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>You are the account holder and all work shown is original or licensed.</li>
+                    <li>You will honour bookings accepted via Roop and communicate delays promptly.</li>
+                    <li>You agree to the ₹699/month listing fee and Roop&apos;s content / behaviour guidelines.</li>
+                    <li>You understand payments are settled directly by the customer; Roop is not a payment gateway for event fees.</li>
+                  </ul>
+                </div>
+                <label className="flex items-center gap-3 p-4 border border-border rounded-2xl cursor-pointer hover:border-gold/40 mt-2">
+                  <input type="checkbox" checked={form.agreedToTerms} onChange={(e) => setForm({...form, agreedToTerms: e.target.checked})} className="w-5 h-5 accent-gold" />
+                  <span className="text-sm">I agree to the above terms.</span>
+                </label>
+              </FieldCard>
+            </>
           )}
 
-          <div className="mt-8">
+          <div className="pt-2">
             <button onClick={save} disabled={loading} className="btn-primary">
               {loading ? <Loader2 className="animate-spin" size={14} /> : saved ? <><Check size={14} />Saved</> : <><Check size={14} />Save changes</>}
             </button>
@@ -945,9 +1055,25 @@ function ProfileTab({ artist }: { artist: Artist }) {
 
 function SectionHead({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="mb-2">
+    <div>
       <h3 className="font-display text-2xl">{title}</h3>
       <p className="text-sm text-ink-dim mt-1">{subtitle}</p>
+    </div>
+  );
+}
+
+function FieldCard({ title, icon: Icon, children }: {
+  title: string;
+  icon?: typeof Settings;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="glass rounded-3xl p-5 lg:p-6 space-y-4">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold">
+        {Icon && <Icon size={13} />}
+        {title}
+      </div>
+      {children}
     </div>
   );
 }

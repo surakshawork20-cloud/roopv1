@@ -132,6 +132,7 @@ export default async function ArtistDashboard() {
       avgRating={avgRating}
       earnings={earnings}
       userName={user.name}
+      userId={user.id}
     />
   );
 }

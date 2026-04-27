@@ -22,6 +22,14 @@ export async function PATCH(req: NextRequest) {
       specialties: body.specialties,
       years_exp: body.yearsExp,
       instagram: body.instagram || null,
+      experience_summary: body.experienceSummary ?? "",
+      travel_radius_km: body.travelRadiusKm ?? 0,
+      upi_id: body.upiId || null,
+      bank_account_name: body.bankAccountName || null,
+      bank_ifsc: body.bankIfsc || null,
+      bank_account_no: body.bankAccountNo || null,
+      cancellation_policy: body.cancellationPolicy ?? "",
+      agreed_to_terms: !!body.agreedToTerms,
     })
     .eq("id", user.artistId)
     .select()

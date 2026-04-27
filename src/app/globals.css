@@ -275,6 +275,22 @@ body {
     color: var(--ink-dim);
   }
 
+  /* Shared dashboard input style. Lives here (not inside a styled-jsx
+     block in <Modal>) so it applies anywhere — modals, profile forms,
+     image-picker URL paste, etc. */
+  .dash-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.85rem;
+    background: rgba(245, 235, 224, 0.04);
+    border: 1px solid var(--border-strong);
+    color: var(--ink);
+    outline: none;
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .dash-input:focus { border-color: var(--gold); }
+
   /* ────────────────────────────────────────────────────────────
      LUXE THEME — applied only to .luxe scope (artist dashboard).
      Cream backdrop + wine ink so the studio reads as a calm,
