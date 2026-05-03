@@ -7,6 +7,7 @@ import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { ArtistCTA } from "@/components/landing/ArtistCTA";
 import { FinalCTA } from "@/components/landing/FinalCTA";
+import { LandingIntro } from "@/components/LandingIntro";
 import { toCardArtist } from "@/lib/supabase/shape";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export default async function Home() {
   const featured = await getFeatured();
   return (
     <>
+      <LandingIntro />
       <Hero />
       <Stats />
       <ServiceCategories />
